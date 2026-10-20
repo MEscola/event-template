@@ -1,377 +1,393 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arraiá ReisFit — Financeiro ADM 🔑</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Container de segurança para esconder o painel antes da autenticação */
-        .conteudo-restrito { display: none; }
-        .conteudo-restrito.autorizado { display: block; }
-        
-        /* Estilo dos Badges de Status do app */
-        .badge-pago {
-            background: rgba(76, 175, 80, 0.15);
-            color: #4CAF50;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            border: 1px solid rgba(76, 175, 80, 0.3);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Confra ReisFit 2026 — Administração</title>
 
-        /* SISTEMA DE ABAS MODERNAS */
-        .abas-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .aba-botao {
-            flex: 1;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #aaa;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .aba-botao.ativa {
-            background: #00BCD4;
-            color: #fff;
-            border-color: #00BCD4;
-            box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);
-        }
-        .secao-aba {
-            display: none;
-        }
-        .secao-aba.ativa {
-            display: block;
-        }
-    </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/adm.css">
+
+  
 </head>
+
 <body>
+  <header>
+    <img src="assets/images/teste-banner.jpeg" alt="Confra ReisFit 2026">
+  </header>
 
-    <header>
-        <img src="assets/images/banner.png" alt="Banner Arraiá ReisFit">
-    </header>
+  <main class="admin-wrap">
+    <h1>Administração da Confra</h1>
+    <p class="muted">Área restrita à equipe responsável pelo evento.</p>
 
-    <div class="container">
-        <div id="bloco-seguro" class="conteudo-restrito">
-            <h1>🔑 Painel Financeiro</h1>
-            
-            <!-- Dashboard de Indicadores Financeiros Compacto e Puro -->
-            <div class="form-card" style="display: flex; flex-direction: column; gap: 6px; border: 1px solid #333; padding: 10px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-                    <span style="color: var(--text-secondary);">Total Pago (Alunos):</span>
-                    <strong id="total-publico-geral" style="color: #fff; font-size: 13px; font-weight: bold;">R$ 0,00</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-                    <span style="color: var(--text-secondary);">Total Pago (Parceiros):</span>
-                    <strong id="total-patrocinios" style="color: #fff; font-size: 13px; font-weight: bold;">R$ 0,00</strong>
-                </div>
-                <div style="height: 1px; background: #2a2a2a; width: 100%; margin: 2px 0;"></div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
-                    <span style="color: var(--accent-color);">ARRECADAÇÃO TOTAL:</span>
-                    <strong id="total-geral-caixa" style="color: var(--accent-color); font-size: 14px;">R$ 0,00</strong>
-                </div>
-            </div>
+    <div
+      id="mensagem-admin"
+      role="status"
+      aria-live="polite"
+      style="display:none">
+    </div>
 
-            <!-- MENU DE NAVEGAÇÃO POR ABAS -->
-            <div class="abas-container">
-                <button class="aba-botao ativa" onclick="alternarAbaAdm('aba-participantes', this)">
-                    👥 Participantes
-                </button>
-                 <button class="aba-botao" onclick="alternarAbaAdm('aba-receitas', this)">
-                    💰 Receitas
-                </button>
-                <button class="aba-botao" onclick="alternarAbaAdm('aba-transparencia', this)">
-                    📊 Despesas
-                </button>
-            </div>
+    <!-- Login -->
+    <section id="tela-login" class="admin-card">
+      <h2>Entrar no painel</h2>
 
-            <!-- ========================================== -->
-            <!-- ABA 1: GERENCIAMENTO DE PARTICIPANTES -->
-            <!-- ========================================== -->
-            <div id="aba-participantes" class="secao-aba ativa">
-                <!-- Linha de controle com as duas informações lado a lado -->
-                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #777; text-transform: uppercase; font-weight: bold; margin-bottom: 15px; padding: 0 4px; margin-top: -6px;">
-                    <div>total de pessoas: <strong id="total-pessoas-contagem" style="color: #fff;">0</strong></div>
-                    <div>confirmados: <strong id="total-pessoas-confirmadas" style="color: #4CAF50;">0</strong></div>
-                </div>
+      <form id="form-login">
+        <div class="admin-field">
+          <label for="login-email">E-mail cadastrado no Supabase</label>
+          <input
+            id="login-email"
+            type="email"
+            autocomplete="username"
+            required>
+        </div>
 
-                <!-- Tabela Administrativa modo Escuro -->
-                <div class="form-card" style="padding: 10px; overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Participante</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-adm-corpo">
-                            <!-- Injetado dinamicamente via js/adm.js -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="admin-field">
+          <label for="login-senha">Senha</label>
+          <input
+            id="login-senha"
+            type="password"
+            autocomplete="current-password"
+            required>
+        </div>
 
-            <!-- ========================================== -->
-<!-- ABA 2: RECEITAS -->
-<!-- ========================================== -->
+        <button
+          class="admin-btn btn-primary"
+          type="submit"
+          id="btn-login">
+          Entrar
+        </button>
+      </form>
+    </section>
 
-<div id="aba-receitas" class="secao-aba">
+    <!-- Painel administrativo -->
+    <section id="painel-admin">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <p id="admin-identificado" class="muted"></p>
+        <button
+          type="button"
+          id="btn-sair"
+          class="admin-btn btn-neutral">
+          Sair
+        </button>
+      </div>
 
-    <!-- Formulário -->
-    <div class="form-card"
-        style="background: rgba(255,255,255,.02); padding:15px; border-radius:14px; border:1px solid rgba(255,255,255,.05);">
+      <!-- Indicadores -->
+      <div class="admin-grid">
+        <div class="indicador">
+          <small>Arrecadação confirmada</small>
+          <strong id="indicador-arrecadado">R$ 0,00</strong>
+        </div>
 
-        <h3 style="color:#00BCD4; margin:0 0 5px 0;">
-            💰 Lançar Receita
-        </h3>
+        <div class="indicador">
+          <small>Total de despesas</small>
+          <strong id="indicador-despesas">R$ 0,00</strong>
+        </div>
 
-        <p style="color:#aaa; font-size:11px; margin-bottom:15px;">
-            Registre contribuições de parceiros, doações ou qualquer outra receita recebida para o evento.
+        <div class="indicador">
+          <small>Saldo atual</small>
+          <strong id="indicador-saldo">R$ 0,00</strong>
+        </div>
+
+        <div class="indicador">
+          <small>Pessoas inscritas</small>
+          <strong id="indicador-pessoas">0</strong>
+        </div>
+      </div>
+
+      <!-- Abas -->
+      <div class="admin-tabs" role="tablist">
+        <button
+          type="button"
+          class="active"
+          data-aba="secao-participantes">
+          Participantes
+        </button>
+
+        <button
+          type="button"
+          data-aba="secao-despesas">
+          Despesas
+        </button>
+      </div>
+
+      <!-- Participantes -->
+      <section
+        id="secao-participantes"
+        class="admin-section active admin-card">
+
+        <div class="cabecalho-inscricoes">
+          <h2>Inscrições</h2>
+
+          <button
+            type="button"
+            id="btn-toggle-busca"
+            class="btn-lupa"
+            aria-label="Localizar cadastro"
+            aria-expanded="false"
+            aria-controls="painel-busca-inscricoes"
+            title="Localizar cadastro">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="21"
+              height="21"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m20 20-4-4"></path>
+            </svg>
+          </button>
+        </div>
+
+        <p class="muted">
+          Edite os dados quando necessário. Confirme o recebimento antes
+          de marcar uma inscrição como paga. Inscrições canceladas podem
+          ser reativadas.
         </p>
 
-        <form id="form-adm-receitas"
-              onsubmit="lancarReceita(event)"
-              style="display:flex; flex-direction:column; gap:12px;">
+        <!-- Busca oculta inicialmente -->
+        <div
+          id="painel-busca-inscricoes"
+          class="busca-inscricoes"
+          hidden>
 
-            <div class="form-group">
-                <label style="color:#eee; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">
-                    Descrição da Receita
-                </label>
+          <label for="buscar-inscricao" class="sr-only">
+            Nome do titular ou acompanhante
+          </label>
 
-                <input
-                    type="text"
-                    id="receita-descricao"
-                    required
-                    placeholder="Ex: Parceiro João Silva"
-                    style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:8px; border-radius:6px; box-sizing:border-box; font-size:13px;">
-            </div>
+          <input
+            id="buscar-inscricao"
+            type="search"
+            placeholder="Digite o nome do titular ou acompanhante..."
+            autocomplete="off"
+            aria-describedby="contador-inscricoes">
 
-            <div class="form-group">
-                <label style="color:#eee; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">
-                    Valor Recebido
-                </label>
+          <button
+            type="button"
+            id="btn-limpar-busca"
+            class="btn-limpar-busca"
+            aria-label="Limpar pesquisa"
+            title="Limpar pesquisa">
+            &times;
+          </button>
 
-                <input
-                    type="number"
-                    id="receita-valor"
-                    step="0.01"
-                    required
-                    placeholder="R$ 0,00"
-                    style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:8px; border-radius:6px; box-sizing:border-box; font-size:13px;">
-            </div>
+          <p
+            id="contador-inscricoes"
+            class="muted"
+            aria-live="polite">
+            Carregando cadastros...
+          </p>
+        </div>
 
-            <button
-                type="submit"
-                id="btn-salvar-receita"
-                style="background:#00BCD4; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">
+        <button
+          type="button"
+          class="admin-btn btn-primary"
+          id="btn-atualizar-inscricoes">
+          Atualizar lista
+        </button>
 
-                Salvar Receita
+        <!-- Tabela de inscrições -->
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Titular</th>
+                <th>Grupo</th>
+                <th>Valor previsto</th>
+                <th>Pagamento</th>
+                <th>Inscrição</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
 
-            </button>
+            <tbody id="tabela-inscricoes">
+              <tr>
+                <td colspan="6">Carregando inscrições...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
+      <!-- Despesas -->
+      <section
+        id="secao-despesas"
+        class="admin-section admin-card">
+
+        <h2>Registrar despesa</h2>
+
+        <form id="form-despesa">
+          <div class="admin-field">
+            <label for="despesa-descricao">Descrição</label>
+            <input
+              id="despesa-descricao"
+              maxlength="200"
+              required
+              placeholder="Ex.: Carnes e carvão">
+          </div>
+
+          <div class="admin-field">
+            <label for="despesa-valor">Valor pago (R$)</label>
+            <input
+              id="despesa-valor"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              placeholder="0,00">
+          </div>
+
+          <div class="admin-field">
+            <label for="despesa-categoria">Categoria</label>
+            <select id="despesa-categoria" required>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Bebidas">Bebidas</option>
+              <option value="Descartáveis">Descartáveis</option>
+              <option value="Espaço e logística">Espaço e logística</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <label for="despesa-comprovante">
+              Link do comprovante (opcional)
+            </label>
+            <input
+              id="despesa-comprovante"
+              type="url"
+              placeholder="https://...">
+            <small class="muted">
+              Informe um link acessível ao público.
+            </small>
+          </div>
+
+          <button
+            type="submit"
+            id="btn-salvar-despesa"
+            class="admin-btn btn-primary">
+            Salvar despesa
+          </button>
         </form>
 
+        <h2>Despesas registradas</h2>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Valor</th>
+                <th>Comprovante</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabela-despesas">
+              <tr>
+                <td colspan="5">Carregando despesas...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Janela de edição de inscrição -->
+  <dialog id="modal-edicao">
+    <h2>Editar inscrição</h2>
+
+    <p class="muted">
+      Altere o titular e os acompanhantes. O valor será recalculado
+      pelo banco de dados.
+    </p>
+
+    <form id="form-edicao">
+      <input type="hidden" id="edicao-id">
+
+      <div class="admin-field">
+        <label for="edicao-titular">Nome do titular</label>
+        <input
+          id="edicao-titular"
+          maxlength="150"
+          required>
+      </div>
+
+      <div
+        id="aviso-pagamento-edicao"
+        class="aviso-edicao"
+        style="display:none">
+        Esta inscrição está marcada como paga. Se a alteração mudar
+        o valor previsto, confira a diferença recebida. O sistema não
+        mudará automaticamente o status do pagamento.
+      </div>
+
+      <h3>Acompanhantes</h3>
+
+      <div id="lista-acompanhantes-edicao"></div>
+
+      <button
+        type="button"
+        id="btn-adicionar-acompanhante"
+        class="admin-btn btn-neutral">
+        + Adicionar acompanhante
+      </button>
+
+      <p class="muted">
+        Adultos: 16 anos ou mais. Crianças de 11 a 15 anos têm valor
+        reduzido. Crianças de 0 a 10 anos não pagam.
+      </p>
+
+      <div class="modal-acoes">
+        <button
+          type="submit"
+          id="btn-salvar-edicao"
+          class="admin-btn btn-primary">
+          Salvar alterações
+        </button>
+
+        <button
+          type="button"
+          id="btn-cancelar-edicao"
+          class="admin-btn btn-neutral">
+          Fechar
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Navegação -->
+  <nav>
+    <div class="nav-bar">
+      <a href="app.html" class="nav-item">
+        <span class="nav-icon">📝</span>
+        <span>Inscrição</span>
+      </a>
+
+      <a href="lista.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span>Quem vai?</span>
+      </a>
+
+      <a
+        href="adm.html"
+        class="nav-item active"
+        aria-current="page">
+        <span class="nav-icon">🔑</span>
+        <span>ADM</span>
+      </a>
     </div>
+  </nav>
 
-    <!-- Lista de receitas -->
-    <div class="form-card"
-        style="margin-top:15px; background:rgba(0,0,0,.2); padding:10px; border-radius:14px; border:1px solid rgba(255,255,255,.03);">
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-
-            <h4 style="margin:0; color:#fff; font-size:14px;">
-                💵 Receitas Registradas
-            </h4>
-
-            <div id="total-receitas-painel"
-                 style="font-size:11px; background:rgba(76,175,80,.1); color:#4CAF50; border:1px solid rgba(76,175,80,.25); padding:4px 8px; border-radius:6px; font-weight:bold;">
-
-                R$ 0,00
-
-            </div>
-
-        </div>
-
-        <div style="overflow-x:auto;">
-
-            <table style="width:100%; border-collapse:collapse; text-align:left;">
-
-                <thead>
-
-                    <tr style="border-bottom:1px solid rgba(255,255,255,.1); color:#00BCD4; font-size:11px; text-transform:uppercase;">
-
-                        <th style="padding:6px;">Descrição</th>
-                        <th style="padding:6px;">Valor</th>
-                        <th style="padding:6px; text-align:center;">Ação</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="tabela-adm-receitas-corpo">
-
-                    <!-- Preenchido futuramente pelo adm.js -->
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</div>
-
-            <!-- ========================================== -->
-            <!-- ABA 3: FORMULÁRIO DE GASTOS E COMPROVANTES -->
-            <!-- ========================================== -->
-            <div id="aba-transparencia" class="secao-aba">
-                <div class="form-card" style="background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
-                    <h3 style="color: #00BCD4; margin-top: 0; margin-bottom: 5px;">📊 Lançar Custo / Despesa</h3>
-                    <p style="color: #aaa; font-size: 11px; margin-bottom: 15px;">O cupom anexado ficará visível no Portal da Transparência dos alunos.</p>
-
-                    <form id="form-adm-gastos" onsubmit="lancarGastoArraia(event)" style="display: flex; flex-direction: column; gap: 12px;">
-                        <div class="form-group">
-                            <label style="color:#eee; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Descrição do Item:</label>
-                            <input type="text" id="gasto-descricao" required placeholder="Ex: Carnes e carvão (Guanabara)" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:8px; border-radius:6px; box-sizing:border-box; font-size:13px;">
-                        </div>
-                        
-                        <div style="display: flex; gap: 10px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label style="color:#eee; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Valor Pago:</label>
-                                <input type="number" step="0.01" id="gasto-valor" required placeholder="R$ 0,00" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:8px; border-radius:6px; box-sizing:border-box; font-size:13px;">
-                            </div>
-
-                            <div class="form-group" style="flex: 1;">
-                                <label style="color:#eee; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Categoria:</label>
-                                <select id="gasto-categoria" required style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:8px; border-radius:6px; box-sizing:border-box; font-size:13px; height: 37px;">
-                                    <option value="Descartáveis">Descartáveis</option>
-                                    <option value="Bebidas">Bebidas</option>
-                                    <option value="Decoração / Logística">Decoração</option>
-                                    <option value="Brindes e Bingo">Brindes / Bingo</option>
-                                    <option value="Outros">Outros</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label style="color:#00BCD4; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Foto do Cupom / Nota Fiscal (Opcional):</label>
-                            <input type="file" id="gasto-arquivo" accept="image/*,application/pdf" style="width:100%; background:#1a1a1a; color:#ccc; padding:6px; border-radius:6px; font-size:12px; border: 1px dashed #00BCD4; box-sizing: border-box;">
-                        </div>
-
-                        <button type="submit" id="btn-salvar-gasto" style="background: #00BCD4; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; width: 100%; margin-top: 5px;">Lançar Despesa</button>
-                    </form>
-                </div>
-
-                <!-- Tabela de Notas Fiscais Já Lançadas -->
-                <div class="form-card" style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <h4 style="margin:0; color:#fff; font-size: 14px;">📋 Cupons Registrados</h4>
-                        <div style="font-size:11px; background:rgba(244,67,54,0.1); color:#f44336; border:1px solid rgba(244,67,54,0.2); padding:4px 8px; border-radius:6px; font-weight:bold;" id="total-gastos-painel">
-                            R$ 0,00
-                        </div>
-                    </div>
-                    
-                    <div style="overflow-x: auto;">
-                        <table style="width:100%; border-collapse:collapse; text-align:left;">
-                            <thead>
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#00BCD4; font-size:11px; text-transform:uppercase;">
-                                    <th style="padding:6px;">Item</th>
-                                    <th style="padding:6px;">Valor</th>
-                                    <th style="padding:6px; text-align:center;">Nota</th>
-                                    <th style="padding:6px; text-align:center;">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabela-adm-gastos-corpo">
-                                <!-- Injetado dinamicamente via js/adm.js -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-           
-
-        </div>
-    </div>
-
-    <!-- Barra Inferior Mobile Integrada -->
-    <nav>
-        <div class="nav-bar">
-            <a href="index.html" class="nav-item">
-                <span class="nav-icon">📝</span>
-                <span>EU VOU!</span>
-            </a>
-            <a href="lista.html" class="nav-item">
-                <span class="nav-icon">👀</span>
-                <span>Quem vai?</span>
-            </a>
-            <a href="adm.html" class="nav-item active">
-                <span class="nav-icon">🔑</span>
-                <span>ADM</span>
-            </a>
-        </div>
-    </nav>
-
-    <!-- Importação dos scripts com quebra de cache atualizada para v=4 -->
-    <script src="js/supabase.js?v=4"></script>
-    <script src="js/adm.js?v=4"></script>
-    <script>
-        // Função simples para alternar as abas na tela
-        function alternarAbaAdm(idAba, botaoClicado) {
-            // Remove a classe ativa de todas as abas
-            document.querySelectorAll('.secao-aba').forEach(secao => secao.classList.remove('ativa'));
-            document.querySelectorAll('.aba-botao').forEach(btn => btn.classList.remove('ativa'));
-            
-            // Ativa a aba e o botão correto
-            document.getElementById(idAba).classList.add('ativa');
-            botaoClicado.classList.add('ativa');
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const loginValido = sessionStorage.getItem('reisfit_adm_auth');
-
-            if (loginValido === 'autorizado') {
-                const blocoSeguro = document.getElementById('bloco-seguro');
-                if (blocoSeguro) blocoSeguro.classList.add('autorizado');
-                if (typeof carregarPainelADM === 'function') carregarPainelADM();
-            } else {
-                const senhaDigitada = prompt("Acesso Restrito. Digite a senha do Financeiro ADM:");
-                if (!senhaDigitada) {
-                    window.location.href = "index.html?v=4";
-                    return;
-                }
-
-                const senhaTratada = senhaDigitada.toLowerCase().trim();
-                const senhaMascarada = "6202tifsier";
-                const senhaCorreta = senhaMascarada.split('').reverse().join('');
-
-                if (senhaTratada === "reisfitadm" || senhaTratada === senhaCorreta) {
-                    sessionStorage.setItem('reisfit_adm_auth', 'autorizado');
-                    const blocoSeguro = document.getElementById('bloco-seguro');
-                    if (blocoSeguro) blocoSeguro.classList.add('autorizado');
-                    if (typeof carregarPainelADM === 'function') carregarPainelADM();
-                } else {
-                    alert("Senha incorreta!");
-                    window.location.href = "index.html?v=4";
-                }
-            }
-        });
-    </script>
+  <script src="js/supabase.js?v=6"></script>
+  <script src="js/adm.js?v=7"></script>
 </body>
 </html>

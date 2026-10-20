@@ -1,4 +1,4 @@
-#  Sistema de Gestão para o Arraiá ReisFit
+# Event Template
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)
@@ -8,258 +8,116 @@
 ![Mobile First](https://img.shields.io/badge/Design-Mobile--First-0EA5E9?style=flat-square)
 ![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222222?style=flat-square&logo=githubpages&logoColor=white)
 
-Aplicação web desenvolvida para gerenciar inscrições, controle de participantes, administração financeira e prestação de contas do evento **Arraiá ReisFit**.
-O projeto foi construído utilizando **HTML5, CSS3 e JavaScript**, com o **Supabase** como Backend as a Service (BaaS), permitindo sincronização em tempo real entre os módulos públicos e administrativos.
 
----
+Template de aplicação web para organização e gerenciamento de eventos, desenvolvido com HTML, CSS, JavaScript e Supabase.
 
-## 🚀 Demonstração
-
-
-**🔗 Aplicação:** https://mescola.github.io/arraia-reisfit/app.html
-
----
-
-## 📸 Telas do Sistema
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="docs/screenshots/cadastro.png" width="200">
-      <br>
-      <strong>Página de Inscrição</strong>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/admin.png" width="200">
-      <br>
-      <strong>Painel Administrativo</strong>
-    </td>
-  </tr>
-
-  <tr>
-    <td align="center">
-      <img src="docs/screenshots/lista.png" width="200">
-      <br>
-      <strong>Lista Pública</strong>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/transparencia.png" width="200">
-      <br>
-      <strong>Portal da Transparência</strong>
-    </td>
-  </tr>
-</table>
----
-
-## 🎥 Demonstração
-
-<p align="center">
-<img src="docs/gif/demo1.gif" width="200">
-<img src="docs/gif/demo2.gif" width="200">
-<br>
-  <em>Demonstração do fluxo completo da aplicação.</em>
-</p>
----
+O projeto serve como ponto de partida para criar páginas de inscrição, listas de participantes, painel administrativo e transparência financeira, adaptando os recursos às necessidades de cada evento.
 
 ## Funcionalidades
 
-### Inscrição de Participantes
+- Cadastro de participantes e acompanhantes.
+- Seleção de itens ou contribuições, conforme a configuração do evento.
+- Consulta da lista de participantes.
+- Painel administrativo para gerenciamento de informações e controle financeiro.
+- Página de transparência com indicadores e prestação de contas.
 
-- Cadastro de participantes
-- Cadastro de cônjuge e acompanhantes
-- Seleção do prato compartilhado
-- Cálculo automático do valor da inscrição
-- Validação dos campos obrigatórios
+> Os recursos disponíveis dependem da configuração do projeto Supabase e dos ajustes realizados para cada evento.
 
-### Lista Pública
+## Tecnologias
 
-- Exibição dos participantes confirmados
-- Organização dos pratos cadastrados
-- Quantidade de acompanhantes
-- Interface responsiva para dispositivos móveis
+- HTML5
+- CSS3
+- JavaScript
+- Supabase — banco de dados PostgreSQL e serviços de backend.
+- GitHub Pages — opção para hospedagem das páginas estáticas.
 
-### Painel Administrativo
+## Como configurar o projeto
 
-- Controle financeiro
-- Confirmação de pagamentos via PIX
-- Edição inline de registros
-- Exclusão com dupla confirmação
-- Indicadores financeiros em tempo real
+### 1. Clone o repositório
 
-### Portal da Transparência
-
-- Total arrecadado
-- Total gasto
-- Saldo do evento
-- Gastos agrupados por categoria
-- Links para notas fiscais e comprovantes
-
----
-
-# Arquitetura
-
-```text
-Participante
-      │
-      ▼
- Formulário
-      │
-      ▼
-  Supabase
-      │
- ┌────┴──────────┐
- ▼               ▼
-Lista        Administração
-                    │
-                    ▼
-        Portal da Transparência
+```bash
+git clone https://github.com/MEscola/event-template.git
+cd event-template
 ```
 
----
+### 2. Configure o Supabase
 
-## 📁 Estrutura do Projeto
+Crie um projeto no [Supabase](https://supabase.com/) ou utilize um projeto existente destinado ao evento.
 
-```text
-.
-├── index.html
-├── lista.html
-├── adm.html
-├── transparencia.html
-│
-├── css
-│   └── style.css
-│
-├── js
-│   ├── supabase.js
-│   ├── cadastro.js
-│   ├── lista.js
-│   ├── adm.js
-│   └── transparencia.js
-│
-|── screenshots
+No painel do Supabase, obtenha a URL do projeto e a chave pública (`anon` ou `publishable`, conforme a interface disponível).
+
+Copie o arquivo de exemplo:
+
+```bash
+cp js/supabase.example.js js/supabase.js
 ```
 
----
-
-## 🛠️ Tecnologias Utilizadas
-
-| Tecnologia | Finalidade |
-|------------|------------|
-| HTML5 | Estrutura da aplicação |
-| CSS3 | Layout responsivo e estilização |
-| JavaScript (ES6+) | Regras de negócio |
-| Supabase | Backend como Serviço |
-| PostgreSQL | Banco de Dados |
-| Row Level Security (RLS) | Segurança dos dados |
-
----
-
-## 🔒 Segurança
-
-O projeto utiliza recursos do Supabase para proteção dos dados:
-
-- Row Level Security (RLS)
-- Controle de permissões
-- Políticas de acesso para leitura e escrita
-- Isolamento entre módulos públicos e administrativos
-
----
-
-## Modelo de Banco de Dados
-
-### cadastro_arraia
-
-| Campo | Tipo |
-|--------|------|
-| id | int8 |
-| nome | text |
-| categoria_prato | text |
-| sabor_prato | text |
-| qtd_conjuge | int4 |
-| qtd_amigos | int4 |
-| total_pix | numeric |
-| status_pix | text |
-| created_at | timestamptz |
-
----
-
-### gastos_arraia
-
-| Campo | Tipo |
-|--------|------|
-| id | int8 |
-| categoria | text |
-| descricao | text |
-| valor | numeric |
-| url_nota | text |
-| created_at | timestamptz |
-
----
-
-## Configuração
-
-Configure o arquivo responsável pela conexão com o Supabase.
+Edite `js/supabase.js` e preencha os valores correspondentes ao seu projeto:
 
 ```javascript
-const SUPABASE_URL = "...";
-const SUPABASE_KEY = "...";
+const SUPABASE_URL = "SUA_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "SUA_CHAVE_PUBLICA";
 ```
 
----
+O arquivo `js/supabase.js` é ignorado pelo Git e não deve ser enviado ao repositório.
 
-## Deploy
+**Segurança:** utilize somente a chave pública no frontend. Nunca exponha chaves `service_role` ou `secret`. Configure as políticas de Row Level Security (RLS) nas tabelas do Supabase para controlar o acesso aos dados.
 
-O projeto pode ser hospedado facilmente em:
+### 3. Configure o banco de dados
 
-- GitHub Pages
-- Vercel
-- Netlify
+Crie as tabelas, colunas, relacionamentos e políticas de acesso necessárias às funcionalidades que serão utilizadas.
 
-Como o backend utiliza Supabase, não existe necessidade de servidor próprio.
+Os nomes das tabelas e as políticas devem corresponder às consultas realizadas pelos arquivos JavaScript do projeto.
 
----
+### 4. Execute a aplicação
 
-## Roadmap
+Como o projeto utiliza páginas estáticas, você pode abrir `index.html` no navegador ou executar um servidor HTTP local para testar a aplicação.
 
-- [ ] Login utilizando Supabase Auth
-- [ ] Controle de permissões (RBAC)
-- [ ] Upload de comprovantes pelo Storage
-- [ ] Dashboard com gráficos financeiros
-- [ ] Exportação em PDF
-- [ ] Exportação em Excel
-- [ ] Relatórios por participante
-- [ ] Histórico de eventos
-- [ ] Cadastro de múltiplos eventos
+Para publicar no GitHub Pages, configure a hospedagem do repositório e confirme que os arquivos necessários estão disponíveis no ambiente de publicação.
 
----
-## 💡 Principais Desafios Técnicos
+## Estrutura do projeto
 
-Durante o desenvolvimento, alguns desafios exigiram soluções específicas:
+```text
+event-template/
+├── assets/
+│   └── images/
+├── css/
+│   └── style.css
+├── docs/
+│   ├── gif/
+│   └── screenshots/
+├── js/
+│   ├── supabase.example.js
+│   ├── adm.js
+│   ├── cadastro.js
+│   ├── lista.js
+│   └── transparencia.js
+├── adm.html
+├── app.html
+├── index.html
+├── lista.html
+├── manutencao.html
+├── transparencia.html
+├── .gitignore
+└── README.md
+```
 
-- Sincronização em tempo real entre o painel administrativo e o portal da transparência.
-- Separação da arrecadação entre participantes e parceiros sem duplicidade de valores.
-- Cálculo automático de métricas financeiras e público pagante.
-- Implementação de políticas de segurança utilizando Row Level Security (RLS) no Supabase.
-- Desenvolvimento de uma interface Mobile First para uso durante o evento.
+## Personalização
 
-## 🤖 Desenvolvimento com IA
+Antes de utilizar o template em um novo evento:
 
-Este projeto contou com o suporte de Inteligência Artificial Generativa durante o processo de desenvolvimento, utilizando o **Google Gemini** como ferramenta de apoio.
+1. Atualize os textos, títulos, imagens e identidade visual.
+2. Configure as datas, regras de inscrição, valores e demais parâmetros do evento.
+3. Prepare o banco de dados e as políticas de segurança no Supabase.
+4. Implemente autenticação e autorização adequadas para o painel administrativo.
+5. Teste o cadastro, as consultas, as operações administrativas e a transparência antes da publicação.
 
-A IA foi utilizada como assistente técnico para:
+## Segurança
 
-- Estruturação da arquitetura
-- Revisão de código
-- Refatoração de funções JavaScript
-- Modelagem do banco de dados
-- Otimização das consultas ao Supabase
+A chave pública do Supabase não substitui as regras de autorização. As operações permitidas devem ser controladas no banco de dados por meio de RLS e, quando necessário, de autenticação e verificação de permissões.
 
-Todas as decisões de arquitetura, implementação e validação permaneceram sob responsabilidade do desenvolvedor.
+O painel administrativo não deve depender apenas de senhas armazenadas no código HTML ou JavaScript.
 
----
+## Licença
 
-## 👩‍💻 Desenvolvido por
-
-**Márcia Escolástico da Silva**
-
-- LinkedIn: https://www.linkedin.com/in/marcia-escolastico-44882436/
+Defina uma licença antes de distribuir ou permitir o uso do projeto por terceiros.

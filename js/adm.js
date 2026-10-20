@@ -1,546 +1,1301 @@
-// js/adm.js
 
-window.addEventListener('DOMContentLoaded', () => {
-    carregarDadosPainelAdmin();
-    carregarGastosPainelAdmin(); // Carrega os gastos cadastrados assim que abre o painel
-});
+let arrecadacaoTotal = 0;
+let despesasTotal = 0;
 
-function carregarPainelADM() {
-    carregarDadosPainelAdmin();
-    carregarGastosPainelAdmin();
+const inscricoesCache = new Map();
+const MAX_ACOMPANHANTES = 30;
+
+// =====================================================
+// UTILITÁRIOS
+// =====================================================
+
+function formatarMoeda(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
 }
 
-// ==========================================
-// 1. GERENCIAMENTO FINANCEIRO DOS PARTICIPANTES
-// ==========================================
+function escaparHTML(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, (caractere) => {
+    const entidades = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    };
 
-async function carregarDadosPainelAdmin() {
-    const tabelaCorpo = document.getElementById('tabela-adm-corpo');
-    const containerGeral = document.getElementById('total-geral-caixa');
-    const containerPublico = document.getElementById('total-publico-geral');
-    const containerPatrocinios = document.getElementById('total-patrocinios');
+    return entidades[caractere];
+  });
+}
 
-    if (!tabelaCorpo) return;
+function normalizarTexto(valor) {
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
+}
 
-    tabelaCorpo.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#aaa;">Atualizando fluxos financeiros...</td></tr>';
+function mostrarMensagem(texto, tipo = "sucesso") {
+  const elemento = document.getElementById("mensagem-admin");
+  if (!elemento) return;
 
-    const { data: inscritos, error } = await _supabase
-        .from('cadastro_arraia')
-        .select('*')
-        .order('nome', { ascending: true });
+  elemento.textContent = texto;
+  elemento.className = `message ${
+    tipo === "erro" ? "message-error" : "message-info"
+  }`;
+  elemento.style.display = "block";
+}
+
+function ocultarMensagem() {
+  const elemento = document.getElementById("mensagem-admin");
+  if (!elemento) return;
+
+  elemento.textContent = "";
+  elemento.className = "";
+  elemento.style.display = "none";
+}
+
+function atualizarIndicadoresFinanceiros() {
+  const arrecadado = document.getElementById("indicador-arrecadado");
+  const despesas = document.getElementById("indicador-despesas");
+  const saldo = document.getElementById("indicador-saldo");
+
+  if (arrecadado) {
+    arrecadado.textContent = formatarMoeda(arrecadacaoTotal);
+  }
+
+  if (despesas) {
+    despesas.textContent = formatarMoeda(despesasTotal);
+  }
+
+  if (saldo) {
+    saldo.textContent = formatarMoeda(arrecadacaoTotal - despesasTotal);
+  }
+}
+
+function alternarTelaLogada(logado, email = "") {
+  const telaLogin = document.getElementById("tela-login");
+  const painel = document.getElementById("painel-admin");
+  const identificacao = document.getElementById("admin-identificado");
+
+  if (telaLogin) {
+    telaLogin.style.display = logado ? "none" : "block";
+  }
+
+  if (painel) {
+    painel.style.display = logado ? "block" : "none";
+  }
+
+  if (identificacao) {
+    identificacao.textContent = logado
+      ? `Administrador: ${email}`
+      : "";
+  }
+}
+
+function mensagemErroBanco(erro, mensagemPadrao) {
+  console.error(mensagemPadrao, erro);
+
+  const mensagemBanco = erro?.message;
+
+  if (
+    mensagemBanco &&
+    (
+      mensagemBanco.includes("Acesso negado") ||
+      mensagemBanco.includes("Inscrição") ||
+      mensagemBanco.includes("acompanhante") ||
+      mensagemBanco.includes("titular") ||
+      mensagemBanco.includes("idade") ||
+      mensagemBanco.includes("limite") ||
+      mensagemBanco.includes("preços") ||
+      mensagemBanco.includes("pagamento")
+    )
+  ) {
+    mostrarMensagem(mensagemBanco, "erro");
+  } else {
+    mostrarMensagem(mensagemPadrao, "erro");
+  }
+}
+
+// =====================================================
+// BUSCA DE INSCRIÇÕES
+// =====================================================
+
+function aplicarFiltroInscricoes() {
+  const campoBusca = document.getElementById("buscar-inscricao");
+  const tabela = document.getElementById("tabela-inscricoes");
+  const contador = document.getElementById("contador-inscricoes");
+
+  if (!campoBusca || !tabela) return;
+
+  const termo = normalizarTexto(campoBusca.value);
+  const linhas = [...tabela.querySelectorAll("tr[data-search]")];
+
+  let encontrados = 0;
+
+  linhas.forEach((linha) => {
+    const textoCadastro = normalizarTexto(linha.dataset.search);
+    const corresponde = textoCadastro.includes(termo);
+
+    linha.hidden = !corresponde;
+
+    if (corresponde) {
+      encontrados++;
+    }
+  });
+
+  let linhaSemResultados = document.getElementById(
+    "linha-sem-resultados"
+  );
+
+  if (linhas.length > 0 && encontrados === 0) {
+    if (!linhaSemResultados) {
+      linhaSemResultados = document.createElement("tr");
+      linhaSemResultados.id = "linha-sem-resultados";
+
+      const celula = document.createElement("td");
+      celula.colSpan = 6;
+
+      linhaSemResultados.appendChild(celula);
+      tabela.appendChild(linhaSemResultados);
+    }
+
+    linhaSemResultados.hidden = false;
+
+    linhaSemResultados.querySelector("td").textContent =
+      `Nenhum cadastro encontrado para "${campoBusca.value.trim()}".`;
+  } else if (linhaSemResultados) {
+    linhaSemResultados.hidden = true;
+  }
+
+  if (contador) {
+    contador.textContent = termo
+      ? `${encontrados} de ${linhas.length} cadastro(s) encontrado(s)`
+      : `${linhas.length} cadastro(s) na lista`;
+  }
+}
+
+function configurarBuscaInscricoes() {
+  const botaoBusca = document.getElementById("btn-toggle-busca");
+  const painelBusca = document.getElementById("painel-busca-inscricoes");
+  const campoBusca = document.getElementById("buscar-inscricao");
+  const botaoLimpar = document.getElementById("btn-limpar-busca");
+
+  if (!botaoBusca || !painelBusca || !campoBusca) return;
+
+  botaoBusca.addEventListener("click", () => {
+    const estaAberta = !painelBusca.hidden;
+
+    if (estaAberta) {
+      // Fecha a busca e restaura a lista completa.
+      campoBusca.value = "";
+      aplicarFiltroInscricoes();
+
+      painelBusca.hidden = true;
+      botaoBusca.setAttribute("aria-expanded", "false");
+      botaoBusca.setAttribute("aria-label", "Localizar cadastro");
+      botaoBusca.title = "Localizar cadastro";
+    } else {
+      // Abre a busca e posiciona o cursor no campo.
+      painelBusca.hidden = false;
+      botaoBusca.setAttribute("aria-expanded", "true");
+      botaoBusca.setAttribute("aria-label", "Fechar busca");
+      botaoBusca.title = "Fechar busca";
+
+      campoBusca.focus();
+    }
+  });
+
+  campoBusca.addEventListener("input", aplicarFiltroInscricoes);
+
+  botaoLimpar?.addEventListener("click", () => {
+    campoBusca.value = "";
+    aplicarFiltroInscricoes();
+    campoBusca.focus();
+  });
+}
+
+// =====================================================
+// AUTENTICAÇÃO E AUTORIZAÇÃO
+// =====================================================
+
+async function validarAdministrador() {
+  try {
+    const {
+      data: { user },
+      error
+    } = await _supabase.auth.getUser();
+
+    if (error || !user) {
+      alternarTelaLogada(false);
+      return false;
+    }
+
+    const { data, error: erroAdmin } = await _supabase.rpc("is_admin");
+
+    if (erroAdmin || data !== true) {
+      await _supabase.auth.signOut();
+      alternarTelaLogada(false);
+
+      mostrarMensagem(
+        "Seu usuário não tem permissão de administrador.",
+        "erro"
+      );
+
+      return false;
+    }
+
+    alternarTelaLogada(true, user.email || "");
+    return true;
+  } catch (erro) {
+    console.error("Erro ao validar administrador:", erro);
+    alternarTelaLogada(false);
+
+    mostrarMensagem(
+      "Não foi possível validar o acesso. Tente novamente.",
+      "erro"
+    );
+
+    return false;
+  }
+}
+
+async function entrarNoPainel(evento) {
+  evento.preventDefault();
+  ocultarMensagem();
+
+  const email = document.getElementById("login-email")?.value.trim();
+  const senha = document.getElementById("login-senha")?.value;
+  const botao = document.getElementById("btn-login");
+
+  if (!email || !senha) {
+    mostrarMensagem("Informe seu e-mail e sua senha.", "erro");
+    return;
+  }
+
+  if (botao) botao.disabled = true;
+
+  try {
+    const { error } = await _supabase.auth.signInWithPassword({
+      email,
+      password: senha
+    });
 
     if (error) {
-        console.error("Erro Supabase ADM:", error);
-        tabelaCorpo.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#f44336;">Erro de conexão.</td></tr>';
-        return;
+      mostrarMensagem(
+        "Não foi possível entrar. Confira o e-mail e a senha.",
+        "erro"
+      );
+      return;
     }
 
-    let faturamentoPublicoGeral = 0;
-    let faturamentoPatrocinios = 0;
-    let totalPessoasGeral = 0;
-    let totalPessoasPagas = 0;
+    const autorizado = await validarAdministrador();
 
-    tabelaCorpo.innerHTML = '';
+    if (!autorizado) return;
 
-    if (inscritos && inscritos.length > 0) {
-        inscritos.forEach(item => {
-            const conjuge = Number(item.qtd_conjuge) || 0;
-            const amigos = Number(item.qtd_amigos) || 0;
-            const totalPessoasLinha = 1 + conjuge + amigos;
-            
-            totalPessoasGeral += totalPessoasLinha;
+    mostrarMensagem("Login realizado com sucesso.");
+    await carregarPainelADM(false);
+  } catch (erro) {
+    console.error("Erro no login:", erro);
 
-            const statusAtual = item.status_pix || "Pendente";
-            
-            const ehParceiro = statusAtual.includes("Box Friendly") || statusAtual.includes("Parceria") || statusAtual.includes("Parceiro");
-            const ehParceiro100 = statusAtual.includes("Isenção Total") || statusAtual.includes("100");
-            const ehParceiro50 = statusAtual.includes("Isenção Titular") || statusAtual.includes("50");
-
-            const estaValidado = statusAtual === "Confirmado" || statusAtual === "Pago" || statusAtual === "Parceria Confirmada" || statusAtual.includes("Pago");
-
-            let valorInscricaoCalculada = 0;
-            if (ehParceiro) {
-                if (ehParceiro100) {
-                    valorInscricaoCalculada = 0;
-                } else if (ehParceiro50) {
-                    // Isenção Titular (50): Titular R$ 0, mas paga convidados (Cônjuge R$ 15, Amigos R$ 20)
-                    valorInscricaoCalculada = (conjuge * 15) + (amigos * 20);
-                } else {
-                    valorInscricaoCalculada = (conjuge * 15) + (amigos * 20);
-                }
-            } else {
-                valorInscricaoCalculada = 15 + (conjuge * 15) + (amigos * 20);
-            }
-
-            const valorDoacaoPura = ehParceiro ? (Number(item.total_pix) || 0) : 0;
-
-            if (estaValidado) {
-                totalPessoasPagas += totalPessoasLinha;
-                faturamentoPublicoGeral += valorInscricaoCalculada;
-                
-                if (ehParceiro) {
-                    faturamentoPatrocinios += valorDoacaoPura;
-                }
-            }
-
-            let statusTexto = "⏳ Pendente";
-            let estiloBadge = "background: rgba(255, 152, 0, 0.1); color: #FF9800; border: 1px solid rgba(255, 152, 0, 0.2);";
-
-            if (estaValidado) {
-                statusTexto = "✅ Pago";
-                estiloBadge = "background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.2);";
-            } else if (statusAtual === "Parcial" || statusAtual === "Pagamento Parcial") {
-                statusTexto = "⚡ Parcial";
-                estiloBadge = "background: rgba(255, 87, 34, 0.1); color: #FF5722; border: 1px solid rgba(255, 87, 34, 0.2);";
-            }
-
-            let botaoAcaoStatusHTML = "";
-            if (estaValidado) {
-                let statusAoDesfazer = 'Pendente';
-                if (ehParceiro) {
-                    if (ehParceiro100) statusAoDesfazer = 'Box Friendly (Isenção Total)';
-                    else if (ehParceiro50) statusAoDesfazer = 'Box Friendly (Isenção Titular)';
-                    else statusAoDesfazer = 'Box Friendly';
-                }
-                botaoAcaoStatusHTML = `<button onclick="alterarStatusRapido('${item.id}', '${statusAoDesfazer}')" style="background:#555; color:#fff; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Desfazer</button>`;
-            } else {
-                let statusAoValidar = 'Pago';
-                if (ehParceiro) {
-                    if (ehParceiro100) statusAoValidar = 'Pago (Parceiro 100)';
-                    else if (ehParceiro50) statusAoValidar = 'Pago (Parceiro 50)';
-                    else statusAoValidar = 'Pago (Parceiro)';
-                }
-                botaoAcaoStatusHTML = `<button onclick="alterarStatusRapido('${item.id}', '${statusAoValidar}')" style="background:#4CAF50; color:#fff; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Validar</button>`;
-            }
-
-            let celulaValorHTML = "";
-            if (ehParceiro) {
-                let textoDoacaoInjetada = valorDoacaoPura > 0 ? `<div style="font-size: 10px; color: #00BCD4; margin-top: 2px; font-weight: bold;">Doação: R$ ${valorDoacaoPura},00</div>` : '';
-                
-                celulaValorHTML = `
-                    <td style="padding: 12px; font-weight: bold; white-space: nowrap; vertical-align: top;" id="celula-pai-valor-${item.id}">
-                        <div style="color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;" onclick="event.stopPropagation(); abrirCaixinhaDoacaoAbaixo('${item.id}', ${valorDoacaoPura})" title="Clique para editar a doação">
-                            R$ ${valorInscricaoCalculada},00 <span style="font-size: 13px;">🤝</span>
-                        </div>
-                        ${textoDoacaoInjetada}
-                        <div id="container-doacao-abaixo-${item.id}"></div>
-                    </td>`;
-            } else {
-                celulaValorHTML = `<td style="padding: 12px; font-weight: bold; color: #fff; white-space: nowrap; vertical-align: top;">R$ ${valorInscricaoCalculada},00</td>`;
-            }
-
-            let rotuloParceiro = "";
-            if (ehParceiro) {
-                if (ehParceiro100) rotuloParceiro = ' <span style="color: #00BCD4; font-size: 11px;">(Parceiro 100)</span>';
-                else if (ehParceiro50) rotuloParceiro = ' <span style="color: #00BCD4; font-size: 11px;">(Parceiro 50)</span>';
-                else rotuloParceiro = ' <span style="color: #00BCD4; font-size: 11px;">(Parceiro)</span>';
-            }
-            
-            const nomeExibicao = `<strong>${item.nome}</strong>${rotuloParceiro}`;
-            const saborSeguro = item.sabor_prato || "";
-
-            let textoCriancasHTML = "";
-            if (item.criancas && item.criancas.trim() !== "") {
-                textoCriancasHTML = `<div style="margin-top: 4px; font-size: 11px; color: #FF9800; background: rgba(255, 152, 0, 0.05); padding: 2px 6px; border-radius: 4px; display: inline-block;">👶 Crianças: ${item.criancas}</div>`;
-            }
-
-            tabelaCorpo.innerHTML += `
-                <tr id="linha-${item.id}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 12px; vertical-align: top;" id="celula-nome-${item.id}">
-                        ${nomeExibicao}
-                        <small style="color:#888; display:block; margin-top:2px;">Grupo: ${item.tipo_grupo} | Total: ${totalPessoasLinha} pessoas</small>
-                        ${textoCriancasHTML}
-                    </td>
-                    ${celulaValorHTML}
-                    <td style="padding: 12px; width: 70px; min-width: 70px; white-space: nowrap; vertical-align: top;">
-                        <span class="badge-status" style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; ${estiloBadge}">
-                            ${statusTexto}
-                        </span>
-                    </td>
-                    <td style="padding: 12px; text-align: center; vertical-align: top;">
-                        <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;" id="acoes-${item.id}">
-                            ${botaoAcaoStatusHTML}
-                            <button onclick="abrirEdicaoCadastroCompleta('${item.id}', '${item.nome.replace(/'/g, "\\'")}', '${item.tipo_grupo}', ${conjuge}, ${amigos}, '${saborSeguro.replace(/'/g, "\\'")}', '${statusAtual}', '${(item.criancas || '').replace(/'/g, "\\'")}')" style="background:#673AB7; color:#fff; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Editar</button>
-                            <button onclick="deletarInscricao('${item.id}')" style="background:#f44336; color:#fff; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Excluir</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-    } else {
-        tabelaCorpo.innerHTML = '<tr><td colspan="4" style="padding:30px; text-align:center; color:#aaa;">Nenhum registro.</td></tr>';
-    }
-
-    if (containerPublico) containerPublico.innerText = `R$ ${faturamentoPublicoGeral},00`;
-    if (containerPatrocinios) containerPatrocinios.innerText = `R$ ${faturamentoPatrocinios},00`;
-    if (containerGeral) containerGeral.innerText = `R$ ${faturamentoPublicoGeral + faturamentoPatrocinios},00`;
-    
-    const elGeral = document.getElementById('total-pessoas-contagem');
-    const elPagas = document.getElementById('total-pessoas-confirmadas');
-    
-    if (elGeral) elGeral.innerText = totalPessoasGeral;
-    if (elPagas) elPagas.innerText = totalPessoasPagas;
+    mostrarMensagem(
+      "Ocorreu um erro ao tentar entrar no painel.",
+      "erro"
+    );
+  } finally {
+    if (botao) botao.disabled = false;
+  }
 }
 
-async function alterarStatusRapido(id, novoStatus) {
-    const { error } = await _supabase
-        .from('cadastro_arraia')
-        .update({ status_pix: novoStatus })
-        .eq('id', id);
+async function sairDoPainel() {
+  try {
+    const { error } = await _supabase.auth.signOut();
+    if (error) throw error;
 
-    if (error) {
-        alert("Erro ao salvar: " + error.message);
-    } else {
-        carregarDadosPainelAdmin();
+    arrecadacaoTotal = 0;
+    despesasTotal = 0;
+    inscricoesCache.clear();
+
+    const campoBusca = document.getElementById("buscar-inscricao");
+    const painelBusca = document.getElementById("painel-busca-inscricoes");
+    const botaoBusca = document.getElementById("btn-toggle-busca");
+
+    if (campoBusca) campoBusca.value = "";
+
+    if (painelBusca) painelBusca.hidden = true;
+
+    if (botaoBusca) {
+      botaoBusca.setAttribute("aria-expanded", "false");
+      botaoBusca.setAttribute("aria-label", "Localizar cadastro");
+      botaoBusca.title = "Localizar cadastro";
     }
+
+    atualizarIndicadoresFinanceiros();
+
+    const indicadorPessoas = document.getElementById("indicador-pessoas");
+    if (indicadorPessoas) indicadorPessoas.textContent = "0";
+
+    alternarTelaLogada(false);
+    mostrarMensagem("Você saiu do painel.");
+  } catch (erro) {
+    console.error("Erro ao sair:", erro);
+    mostrarMensagem("Não foi possível encerrar a sessão.", "erro");
+  }
 }
 
-function abrirCaixinhaDoacaoAbaixo(id, doacaoAtual) {
-    const containerAbaixo = document.getElementById(`container-doacao-abaixo-${id}`);
-    if (!containerAbaixo) return;
+// =====================================================
+// ABAS
+// =====================================================
 
-    if (containerAbaixo.innerHTML !== '') {
-        containerAbaixo.innerHTML = '';
-        return;
-    }
+function configurarAbas() {
+  document.querySelectorAll("[data-aba]").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      const idSecao = botao.dataset.aba;
 
-    containerAbaixo.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 2px; margin-top: 5px;" onclick="event.stopPropagation();">
-            <input type="number" id="input-doacao-${id}" value="${doacaoAtual === 0 ? '' : doacaoAtual}" placeholder="R$ 0" style="width:50px; background:#222; color:#fff; border:1px solid #00BCD4; padding:3px; border-radius:4px; font-size:11px;">
-            <button onclick="salvarDoacaoParceiro('${id}')" style="background:#00BCD4; color:#fff; border:none; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;">OK</button>
-            <button onclick="document.getElementById('container-doacao-abaixo-${id}').innerHTML = ''" style="background:#666; color:#fff; border:none; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:11px;">X</button>
-        </div>
-    `;
-    
-    setTimeout(() => {
-        const input = document.getElementById(`input-doacao-${id}`);
-        if (input) {
-            input.focus();
-            if (doacaoAtual > 0) input.select();
-        }
-    }, 30);
+      document.querySelectorAll(".admin-section").forEach((secao) => {
+        secao.classList.remove("active");
+      });
+
+      document.querySelectorAll("[data-aba]").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      document.getElementById(idSecao)?.classList.add("active");
+      botao.classList.add("active");
+    });
+  });
 }
 
-async function salvarDoacaoParceiro(id) {
-    const valorDoado = Number(document.getElementById(`input-doacao-${id}`).value) || 0;
-    const celulaNome = document.getElementById(`celula-nome-${id}`);
-    let eh100 = false;
-    let eh50 = false;
-    
-    if (celulaNome) {
-        if (celulaNome.innerText.includes('100')) eh100 = true;
-        if (celulaNome.innerText.includes('50')) eh50 = true;
-    }
+// =====================================================
+// CARREGAMENTO GERAL
+// =====================================================
 
-    let novoStatusPix = '';
-    if (valorDoado === 0) {
-        if (eh100) novoStatusPix = 'Box Friendly (Isenção Total)';
-        else if (eh50) novoStatusPix = 'Box Friendly (Isenção Titular)';
-        else novoStatusPix = 'Box Friendly';
-    } else {
-        if (eh100) novoStatusPix = 'Pago (Parceiro 100)';
-        else if (eh50) novoStatusPix = 'Pago (Parceiro 50)';
-        else novoStatusPix = 'Pago (Parceiro)';
-    }
+async function carregarPainelADM(verificarPermissao = true) {
+  if (verificarPermissao) {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
+  }
 
-    const { error } = await _supabase
-        .from('cadastro_arraia')
-        .update({ total_pix: valorDoado, status_pix: novoStatusPix })
-        .eq('id', id);
+  try {
+    await Promise.all([
+      carregarInscricoes(),
+      carregarDespesas()
+    ]);
 
-    if (error) {
-        alert("Erro ao lançar patrocínio: " + error.message);
-    } else {
-        carregarDadosPainelAdmin();
-    }
+    atualizarIndicadoresFinanceiros();
+  } catch (erro) {
+    console.error("Erro ao carregar painel:", erro);
+
+    mostrarMensagem(
+      "Não foi possível carregar todos os dados do painel.",
+      "erro"
+    );
+  }
 }
 
-function abrirEdicaoCadastroCompleta(id, nome, tipoGrupo, conjuge, amigos, saborPrato, statusAtual, criancas) {
-    const celulaNome = document.getElementById(`celula-nome-${id}`);
-    if (!celulaNome) return;
+// =====================================================
+// INSCRIÇÕES
+// =====================================================
 
-    let tipoParceriaAtual = "comum";
-    if (statusAtual.includes("100") || statusAtual.includes("Total")) tipoParceriaAtual = "100";
-    else if (statusAtual.includes("Box Friendly") || statusAtual.includes("50") || statusAtual.includes("Titular") || statusAtual.includes("Parceiro")) tipoParceriaAtual = "50";
+async function carregarInscricoes() {
+  const tabela = document.getElementById("tabela-inscricoes");
+  const contador = document.getElementById("contador-inscricoes");
 
-    let doceAtual = "";
-    let salgadoAtual = "";
-    
-    if (saborPrato.includes("|")) {
-        const partes = saborPrato.split("|");
-        partes.forEach(p => {
-            if (p.includes("Doce:")) doceAtual = p.replace("Doce:", "").trim();
-            if (p.includes("Salgado:")) salgadoAtual = p.replace("Salgado:", "").trim();
-        });
-    } else if (saborPrato.includes("Salgado:")) {
-        salgadoAtual = saborPrato.replace("Salgado:", "").trim();
-    } else if (saborPrato.includes("Doce:")) {
-        doceAtual = saborPrato.replace("Doce:", "").trim();
-    } else if (saborPrato && saborPrato !== "Não especificado") {
-        salgadoAtual = saborPrato;
+  try {
+    const { data, error } = await _supabase
+      .from("inscricoes")
+      .select(`
+        id,
+        nome_titular,
+        valor_previsto,
+        status_pagamento,
+        status_inscricao,
+        created_at,
+        acompanhantes (
+          id,
+          nome,
+          idade
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const inscricoes = data || [];
+
+    inscricoesCache.clear();
+
+    inscricoes.forEach((inscricao) => {
+      inscricoesCache.set(inscricao.id, inscricao);
+    });
+
+    let totalArrecadado = 0;
+    let totalPessoas = 0;
+
+    inscricoes.forEach((inscricao) => {
+      if (inscricao.status_inscricao !== "Ativa") return;
+
+      const acompanhantes = inscricao.acompanhantes || [];
+
+      totalPessoas += 1 + acompanhantes.length;
+
+      if (inscricao.status_pagamento === "Pago") {
+        totalArrecadado += Number(inscricao.valor_previsto || 0);
+      }
+    });
+
+    arrecadacaoTotal = totalArrecadado;
+
+    const indicadorPessoas = document.getElementById("indicador-pessoas");
+
+    if (indicadorPessoas) {
+      indicadorPessoas.textContent = totalPessoas;
     }
 
-    celulaNome.innerHTML = `
-        <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px; border: 1px solid #555; width: 100%; box-sizing: border-box;">
-            <span style="font-size:10px; color:#00BCD4; font-weight:bold; display:block; margin-bottom:2px;">NOME DO PARTICIPANTE:</span>
-            <input type="text" id="edit-nome-${id}" value="${nome}" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; margin-bottom:8px; box-sizing: border-box;">
-            
-            <span style="font-size:10px; color:#00BCD4; font-weight:bold; display:block; margin-bottom:2px;">CATEGORIA / PARCERIA:</span>
-            <select id="edit-parceria-${id}" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; margin-bottom:8px; box-sizing: border-box;">
-                <option value="comum" ${tipoParceriaAtual === 'comum' ? 'selected' : ''}>Aluno Comum</option>
-                <option value="50" ${tipoParceriaAtual === '50' ? 'selected' : ''}>Box Friendly (Isenção Titular - 50)</option>
-                <option value="100" ${tipoParceriaAtual === '100' ? 'selected' : ''}>Box Friendly (Isenção Total - 100)</option>
-            </select>
+    atualizarIndicadoresFinanceiros();
 
-            <span style="font-size:10px; color:#aaa; display:block; margin-bottom:2px;">TIPO DE GRUPO:</span>
-            <select id="edit-grupo-${id}" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; margin-bottom:8px; box-sizing: border-box;">
-                <option value="Solteiro" ${tipoGrupo === 'Solteiro' ? 'selected' : ''}>Solteiro</option>
-                <option value="Casal/Família" ${tipoGrupo !== 'Solteiro' ? 'selected' : ''}>Família</option>
-            </select>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <div style="flex: 1;">
-                    <span style="font-size:10px; color:#aaa; display:block;">CÔNJUGE:</span>
-                    <input type="number" id="edit-conjuge-${id}" value="${conjuge}" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; box-sizing: border-box;">
-                </div>
-                <div style="flex: 1;">
-                    <span style="font-size:10px; color:#aaa; display:block;">AMIGOS:</span>
-                    <input type="number" id="edit-amigos-${id}" value="${amigos}" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; box-sizing: border-box;">
-                </div>
+    if (!tabela) return;
+
+    if (!inscricoes.length) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="6">Nenhuma inscrição cadastrada.</td>
+        </tr>
+      `;
+
+      if (contador) {
+        contador.textContent = "0 cadastro(s) na lista";
+      }
+
+      return;
+    }
+
+    tabela.innerHTML = inscricoes.map((inscricao) => {
+      const acompanhantes = inscricao.acompanhantes || [];
+      const ativa = inscricao.status_inscricao === "Ativa";
+      const pago = inscricao.status_pagamento === "Pago";
+
+      // A busca considera o titular e todos os acompanhantes.
+      const textoBusca = normalizarTexto([
+        inscricao.nome_titular,
+        ...acompanhantes.map((pessoa) => pessoa.nome)
+      ].join(" "));
+
+      const listaAcompanhantes = acompanhantes.length
+        ? acompanhantes.map((pessoa) => `
+            <li>
+              ${escaparHTML(pessoa.nome)}
+              (${escaparHTML(pessoa.idade)} anos)
+            </li>
+          `).join("")
+        : "<li>Nenhum acompanhante</li>";
+
+      const statusPagamento = pago
+        ? '<span class="status-pill status-paid">Pago</span>'
+        : '<span class="status-pill status-pending">Pendente</span>';
+
+      const statusInscricao = ativa
+        ? '<span class="status-pill status-active">Ativa</span>'
+        : '<span class="status-pill status-cancelled">Cancelada</span>';
+
+      const botaoEditar = ativa
+        ? `
+          <button
+            type="button"
+            class="admin-btn btn-primary"
+            data-acao="editar-inscricao"
+            data-id="${escaparHTML(inscricao.id)}">
+            Editar dados
+          </button>
+        `
+        : `
+          <button
+            type="button"
+            class="admin-btn btn-neutral"
+            disabled
+            title="Reative a inscrição para editá-la">
+            Editar dados
+          </button>
+        `;
+
+      const botaoPagamento = `
+        <button
+          type="button"
+          class="admin-btn ${pago ? "btn-warning" : "btn-success"}"
+          data-acao="pagamento"
+          data-id="${escaparHTML(inscricao.id)}"
+          data-status="${pago ? "Pago" : "Pendente"}">
+          ${pago ? "Marcar pendente" : "Confirmar pagamento"}
+        </button>
+      `;
+
+      const botaoStatus = `
+        <button
+          type="button"
+          class="admin-btn btn-neutral"
+          data-acao="status-inscricao"
+          data-id="${escaparHTML(inscricao.id)}"
+          data-status="${ativa ? "Ativa" : "Cancelada"}">
+          ${ativa ? "Cancelar inscrição" : "Reativar inscrição"}
+        </button>
+      `;
+
+      const botaoExcluir = `
+        <button
+          type="button"
+          class="admin-btn btn-danger"
+          data-acao="excluir-inscricao"
+          data-id="${escaparHTML(inscricao.id)}">
+          Excluir definitivamente
+        </button>
+      `;
+
+      return `
+        <tr data-search="${escaparHTML(textoBusca)}">
+          <td>
+            <strong>${escaparHTML(inscricao.nome_titular)}</strong>
+            <div class="muted">
+              Cadastro:
+              ${
+                inscricao.created_at
+                  ? escaparHTML(
+                      new Date(inscricao.created_at).toLocaleDateString("pt-BR")
+                    )
+                  : "—"
+              }
             </div>
+          </td>
 
-            <span style="font-size:10px; color:#FF9800; font-weight:bold; display:block; margin-bottom:2px;">CRIANÇAS MENORES DE 13 ANOS:</span>
-            <input type="text" id="edit-criancas-${id}" value="${criancas}" placeholder="Nomes e idades das crianças" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; margin-bottom:8px; box-sizing: border-box;">
+          <td>
+            ${1 + acompanhantes.length} pessoa(s)
+            <details>
+              <summary>Ver acompanhantes</summary>
+              <ul>${listaAcompanhantes}</ul>
+            </details>
+          </td>
 
-            <span style="font-size:10px; color:#4CAF50; font-weight:bold; display:block; margin-bottom:2px;">PRATO SALGADO:</span>
-            <input type="text" id="edit-sabor-salgado-${id}" value="${salgadoAtual}" placeholder="Ex: Coxinha, Empadão" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; margin-bottom:8px; box-sizing: border-box;">
+          <td>${formatarMoeda(inscricao.valor_previsto)}</td>
+          <td>${statusPagamento}</td>
+          <td>${statusInscricao}</td>
 
-            <span style="font-size:10px; color:#4CAF50; font-weight:bold; display:block; margin-bottom:2px;">PRATO DOCE:</span>
-            <input type="text" id="edit-sabor-doce-${id}" value="${doceAtual}" placeholder="Ex: Canjica, Pé de Moleque" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:12px; box-sizing: border-box;">
-        </div>
-    `;
+          <td class="acoes-inscricao">
+            ${botaoEditar}
+            ${botaoPagamento}
+            ${botaoStatus}
+            ${botaoExcluir}
+          </td>
+        </tr>
+      `;
+    }).join("");
 
-    document.getElementById(`acoes-${id}`).innerHTML = `
-        <button onclick="salvarEdicaoCadastroCompleta('${id}')" style="background:#4CAF50; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; width: 100%; margin-bottom:4px;">Salvar</button>
-        <button onclick="carregarDadosPainelAdmin()" style="background:#666; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:11px; width: 100%;">Cancelar</button>
-    `;
+    // Reaplica a busca após atualizar a tabela.
+    aplicarFiltroInscricoes();
+  } catch (erro) {
+    console.error("Erro ao carregar inscrições:", erro);
+
+    if (tabela) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="6">
+            Erro ao carregar inscrições. Verifique o acesso ao banco.
+          </td>
+        </tr>
+      `;
+    }
+
+    if (contador) {
+      contador.textContent = "Não foi possível carregar os cadastros.";
+    }
+
+    throw erro;
+  }
 }
 
-async function salvarEdicaoCadastroCompleta(id) {
-    const nomeAlt = document.getElementById('edit-nome-' + id).value.trim();
-    const grupoAlt = document.getElementById('edit-grupo-' + id).value;
-    const conjugeAlt = Number(document.getElementById('edit-conjuge-' + id).value) || 0;
-    const amigosAlt = Number(document.getElementById('edit-amigos-' + id).value) || 0;
-    const criancasAlt = document.getElementById('edit-criancas-' + id).value.trim();
-    const salgadoAlt = document.getElementById('edit-sabor-salgado-' + id).value.trim();
-    const doceAlt = document.getElementById('edit-sabor-doce-' + id).value.trim();
-    const partnershipAlt = document.getElementById('edit-parceria-' + id).value;
+// =====================================================
+// EDITAR INSCRIÇÃO
+// =====================================================
 
-    if (!nomeAlt) {
-        alert("O nome é obrigatório.");
-        return;
+function adicionarCampoAcompanhante(nome = "", idade = "") {
+  const lista = document.getElementById("lista-acompanhantes-edicao");
+  if (!lista) return;
+
+  if (
+    lista.querySelectorAll(".acompanhante-item").length >=
+    MAX_ACOMPANHANTES
+  ) {
+    mostrarMensagem(
+      `O limite é de ${MAX_ACOMPANHANTES} acompanhantes por inscrição.`,
+      "erro"
+    );
+    return;
+  }
+
+  const item = document.createElement("div");
+  item.className = "acompanhante-item";
+
+  item.innerHTML = `
+    <div class="admin-field">
+      <label>Nome do acompanhante</label>
+      <input
+        class="campo-nome-acompanhante"
+        maxlength="150"
+        required>
+    </div>
+
+    <div class="admin-field">
+      <label>Idade</label>
+      <input
+        class="campo-idade-acompanhante"
+        type="number"
+        min="0"
+        max="120"
+        step="1"
+        required>
+    </div>
+
+    <button
+      type="button"
+      class="admin-btn btn-danger btn-remover-acompanhante">
+      Remover
+    </button>
+  `;
+
+  item.querySelector(".campo-nome-acompanhante").value = nome;
+  item.querySelector(".campo-idade-acompanhante").value = idade;
+
+  lista.appendChild(item);
+}
+
+function abrirEdicaoInscricao(id) {
+  const inscricao = inscricoesCache.get(id);
+
+  if (!inscricao) {
+    mostrarMensagem(
+      "Não foi possível localizar essa inscrição. Atualize a lista.",
+      "erro"
+    );
+    return;
+  }
+
+  if (inscricao.status_inscricao !== "Ativa") {
+    mostrarMensagem(
+      "Reative a inscrição antes de editar os dados.",
+      "erro"
+    );
+    return;
+  }
+
+  const modal = document.getElementById("modal-edicao");
+  const formulario = document.getElementById("form-edicao");
+  const lista = document.getElementById("lista-acompanhantes-edicao");
+
+  if (!modal || !formulario || !lista) {
+    mostrarMensagem(
+      "Não foi possível abrir o formulário de edição.",
+      "erro"
+    );
+    return;
+  }
+
+  formulario.reset();
+  lista.innerHTML = "";
+
+  document.getElementById("edicao-id").value = inscricao.id;
+  document.getElementById("edicao-titular").value =
+    inscricao.nome_titular || "";
+
+  const avisoPagamento = document.getElementById("aviso-pagamento-edicao");
+
+  if (avisoPagamento) {
+    avisoPagamento.style.display =
+      inscricao.status_pagamento === "Pago" ? "block" : "none";
+  }
+
+  (inscricao.acompanhantes || []).forEach((pessoa) => {
+    adicionarCampoAcompanhante(pessoa.nome, pessoa.idade);
+  });
+
+  modal.showModal();
+}
+
+function coletarAcompanhantesEdicao() {
+  const itens = [
+    ...document.querySelectorAll(
+      "#lista-acompanhantes-edicao .acompanhante-item"
+    )
+  ];
+
+  if (itens.length > MAX_ACOMPANHANTES) {
+    throw new Error(
+      `O limite é de ${MAX_ACOMPANHANTES} acompanhantes.`
+    );
+  }
+
+  return itens.map((item) => {
+    const nome = item
+      .querySelector(".campo-nome-acompanhante")
+      .value.trim();
+
+    const idadeTexto = item
+      .querySelector(".campo-idade-acompanhante")
+      .value;
+
+    if (!nome) {
+      throw new Error("Informe o nome de todos os acompanhantes.");
     }
 
-    let novoStatusFinal = "Pendente";
-    if (partnershipAlt === "100") novoStatusFinal = "Box Friendly (Isenção Total)";
-    else if (partnershipAlt === "50") novoStatusFinal = "Box Friendly (Isenção Titular)";
-    else novoStatusFinal = "Pendente";
-
-    let saborFinal = "";
-    if (salgadoAlt && doceAlt) {
-        saborFinal = `Doce: ${doceAlt} | Salgado: ${salgadoAlt}`;
-    } else if (salgadoAlt) {
-        saborFinal = `Salgado: ${salgadoAlt}`;
-    } else if (doceAlt) {
-        saborFinal = `Doce: ${doceAlt}`;
-    } else {
-        saborFinal = "Não especificado";
+    if (idadeTexto.trim() === "") {
+      throw new Error("Informe a idade de todos os acompanhantes.");
     }
 
-    let categoryFinal = grupoAlt === "Solteiro" ? "Editado (Individual)" : "Doce e Salgado 🍫🥐";
+    const idade = Number(idadeTexto);
+
+    if (!Number.isInteger(idade) || idade < 0 || idade > 120) {
+      throw new Error(
+        "Informe idades inteiras entre 0 e 120 anos."
+      );
+    }
+
+    return { nome, idade };
+  });
+}
+
+async function salvarEdicaoInscricao(evento) {
+  evento.preventDefault();
+  ocultarMensagem();
+
+  const id = document.getElementById("edicao-id").value;
+  const nomeTitular = document
+    .getElementById("edicao-titular")
+    .value.trim();
+
+  const botao = document.getElementById("btn-salvar-edicao");
+  const inscricaoOriginal = inscricoesCache.get(id);
+
+  if (!id || !nomeTitular) {
+    mostrarMensagem("Informe o nome do titular.", "erro");
+    return;
+  }
+
+  let acompanhantes;
+
+  try {
+    acompanhantes = coletarAcompanhantesEdicao();
+  } catch (erro) {
+    mostrarMensagem(erro.message, "erro");
+    return;
+  }
+
+  if (
+    inscricaoOriginal?.status_pagamento === "Pago" &&
+    !confirm(
+      "Esta inscrição está marcada como paga.\n\n" +
+      "A alteração de acompanhantes ou idades pode mudar o valor previsto. " +
+      "O pagamento continuará marcado como pago.\n\n" +
+      "Deseja salvar as alterações?"
+    )
+  ) {
+    return;
+  }
+
+  if (botao) botao.disabled = true;
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
+
+    const { data, error } = await _supabase.rpc(
+      "admin_editar_inscricao",
+      {
+        p_inscricao_id: id,
+        p_nome_titular: nomeTitular,
+        p_acompanhantes: acompanhantes
+      }
+    );
+
+    if (error) throw error;
+
+    document.getElementById("modal-edicao").close();
+
+    mostrarMensagem(
+      `Inscrição atualizada. Novo valor previsto: ${formatarMoeda(data)}.`
+    );
+
+    await carregarPainelADM(false);
+  } catch (erro) {
+    mensagemErroBanco(
+      erro,
+      "Não foi possível salvar a inscrição. Verifique os dados e tente novamente."
+    );
+  } finally {
+    if (botao) botao.disabled = false;
+  }
+}
+
+// =====================================================
+// EXCLUSÃO DEFINITIVA DE INSCRIÇÃO
+// =====================================================
+
+async function excluirInscricaoDefinitivamente(id) {
+  const inscricao = inscricoesCache.get(id);
+
+  if (!inscricao) {
+    mostrarMensagem(
+      "Inscrição não encontrada. Atualize a lista antes de excluir.",
+      "erro"
+    );
+    return;
+  }
+
+  const nomeEsperado = inscricao.nome_titular;
+
+  const confirmacao = prompt(
+    `ATENÇÃO: esta ação é definitiva.\n\n` +
+    `Titular: ${nomeEsperado}\n` +
+    `Valor previsto: ${formatarMoeda(inscricao.valor_previsto)}\n` +
+    `Acompanhantes: ${(inscricao.acompanhantes || []).length}\n\n` +
+    `A inscrição e seus acompanhantes serão apagados do banco.\n` +
+    `Despesas registradas separadamente serão preservadas.\n\n` +
+    `Para confirmar, digite EXCLUIR:`
+  );
+
+  if (confirmacao === null) return;
+
+  if (confirmacao.trim().toLocaleUpperCase() !== "EXCLUIR") {
+    mostrarMensagem("Digite 'EXCLUIR' para confirmar.", "erro");
+    return;
+  }
+
+  if (!confirm("Confirma a exclusão DEFINITIVA desta inscrição?")) {
+    return;
+  }
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
+
+    const { error } = await _supabase.rpc(
+      "admin_excluir_inscricao",
+      {
+        p_inscricao_id: id
+      }
+    );
+
+    if (error) throw error;
+
+    mostrarMensagem("Inscrição excluída definitivamente.");
+    await carregarPainelADM(false);
+  } catch (erro) {
+    mensagemErroBanco(
+      erro,
+      "Não foi possível excluir a inscrição. Verifique as permissões do banco."
+    );
+  }
+}
+
+// =====================================================
+// ALTERAR PAGAMENTO
+// =====================================================
+
+async function alterarPagamento(id, statusAtual) {
+  const novoStatus = statusAtual === "Pago" ? "Pendente" : "Pago";
+
+  const mensagem = novoStatus === "Pago"
+    ? "Confirma que o pagamento desta inscrição foi recebido?"
+    : "Marcar este pagamento como pendente?";
+
+  if (!confirm(mensagem)) return;
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
 
     const { error } = await _supabase
-        .from('cadastro_arraia')
-        .update({
-            nome: nomeAlt,
-            tipo_grupo: grupoAlt,
-            qtd_conjuge: conjugeAlt,
-            qtd_amigos: amigosAlt,
-            criancas: criancasAlt,
-            categoria_prato: categoryFinal,
-            sabor_prato: saborFinal,
-            status_pix: novoStatusFinal 
-        })
-        .eq('id', id);
+      .from("inscricoes")
+      .update({ status_pagamento: novoStatus })
+      .eq("id", id);
 
-    if (error) {
-        alert("Erro ao salvar alterações: " + error.message);
-    } else {
-        carregarDadosPainelAdmin();
-    }
+    if (error) throw error;
+
+    mostrarMensagem(
+      novoStatus === "Pago"
+        ? "Pagamento confirmado."
+        : "Pagamento marcado como pendente."
+    );
+
+    await carregarPainelADM(false);
+  } catch (erro) {
+    console.error("Erro ao alterar pagamento:", erro);
+    mostrarMensagem(
+      "Não foi possível atualizar o pagamento.",
+      "erro"
+    );
+  }
 }
 
-async function deletarInscricao(id) {
-    if (!confirm("Deseja excluir este cadastro?")) return;
+// =====================================================
+// CANCELAR OU REATIVAR INSCRIÇÃO
+// =====================================================
+
+async function alterarStatusInscricao(id, statusAtual) {
+  const novoStatus = statusAtual === "Ativa" ? "Cancelada" : "Ativa";
+
+  const mensagem = novoStatus === "Cancelada"
+    ? "Cancelar esta inscrição? Os dados serão mantidos no sistema."
+    : "Reativar esta inscrição?";
+
+  if (!confirm(mensagem)) return;
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
 
     const { error } = await _supabase
-        .from('cadastro_arraia')
-        .delete()
-        .eq('id', id);
+      .from("inscricoes")
+      .update({ status_inscricao: novoStatus })
+      .eq("id", id);
 
-    if (error) {
-        alert("Erro ao excluir: " + error.message);
-    } else {
-        carregarDadosPainelAdmin();
-    }
+    if (error) throw error;
+
+    mostrarMensagem(
+      novoStatus === "Cancelada"
+        ? "Inscrição cancelada. Os dados foram preservados."
+        : "Inscrição reativada."
+    );
+
+    await carregarPainelADM(false);
+  } catch (erro) {
+    console.error("Erro ao alterar inscrição:", erro);
+    mostrarMensagem(
+      "Não foi possível atualizar a inscrição.",
+      "erro"
+    );
+  }
 }
 
-// ==========================================
-// 2. PORTAL DA TRANSPARÊNCIA: GESTÃO DE GASTOS
-// ==========================================
+// =====================================================
+// DESPESAS
+// =====================================================
 
-async function carregarGastosPainelAdmin() {
-    const tabelaGastosCorpo = document.getElementById('tabela-adm-gastos-corpo');
-    const containerTotalGastos = document.getElementById('total-gastos-painel');
-    
-    if (!tabelaGastosCorpo) return;
+async function carregarDespesas() {
+  const tabela = document.getElementById("tabela-despesas");
 
-    tabelaGastosCorpo.innerHTML = '<tr><td colspan="4" style="padding:15px; text-align:center; color:#aaa;">Buscando notas...</td></tr>';
+  try {
+    const { data, error } = await _supabase
+      .from("despesas")
+      .select(`
+        id,
+        descricao,
+        valor,
+        categoria,
+        url_comprovante,
+        created_at
+      `)
+      .order("created_at", { ascending: false });
 
-    const { data: gastos, error } = await _supabase
-        .from('gastos_arraia')
-        .select('*')
-        .order('created_at', { ascending: false });
+    if (error) throw error;
 
-    if (error) {
-        console.error("Erro ao carregar gastos:", error);
-        tabelaGastosCorpo.innerHTML = '<tr><td colspan="4" style="padding:15px; text-align:center; color:#f44336;">Erro.</td></tr>';
-        return;
+    const despesas = data || [];
+
+    despesasTotal = despesas.reduce(
+      (total, despesa) => total + Number(despesa.valor || 0),
+      0
+    );
+
+    atualizarIndicadoresFinanceiros();
+
+    if (!tabela) return;
+
+    if (!despesas.length) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="5">Nenhuma despesa cadastrada.</td>
+        </tr>
+      `;
+      return;
     }
 
-    tabelaGastosCorpo.innerHTML = '';
-    let somaGastos = 0;
+    tabela.innerHTML = despesas.map((despesa) => {
+      let comprovante = "Não informado";
 
-    if (gastos && gastos.length > 0) {
-        gastos.forEach(gasto => {
-            somaGastos += Number(gasto.valor) || 0;
-            
-            let botaoNotaHTML = gasto.url_nota 
-                ? `<a href="${gasto.url_nota}" target="_blank" style="color: #00BCD4; font-weight:bold; text-decoration:none;">📄 Ver</a>` 
-                : `<span style="color:#555; font-style:italic;">Não</span>`;
+      if (despesa.url_comprovante) {
+        try {
+          const url = new URL(despesa.url_comprovante);
 
-            tabelaGastosCorpo.innerHTML += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
-                    <td style="padding: 10px; color:#fff;">
-                        <strong>${gasto.descricao}</strong>
-                        <small style="color:#666; display:block; font-size:10px;">Cat: ${gasto.categoria}</small>
-                    </td>
-                    <td style="padding: 10px; color:#FF9800; font-weight:bold; white-space:nowrap;">R$ ${gasto.valor.toFixed(2)}</td>
-                    <td style="padding: 10px; text-align:center;">${botaoNotaHTML}</td>
-                    <td style="padding: 10px; text-align:center;">
-                        <button onclick="deletarGastoArraia('${gasto.id}', '${gasto.url_nota || ''}')" style="background:#f44336; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">X</button>
-                    </td>
-                </tr>
+          if (
+            url.protocol === "https:" ||
+            url.protocol === "http:"
+          ) {
+            comprovante = `
+              <a
+                href="${escaparHTML(url.href)}"
+                target="_blank"
+                rel="noopener noreferrer">
+                Ver comprovante
+              </a>
             `;
-        });
-    } else {
-        tabelaGastosCorpo.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#888;">Nenhum custo lançado.</td></tr>';
-    }
-
-    if (containerTotalGastos) {
-        containerTotalGastos.innerText = `R$ ${somaGastos.toFixed(2)}`;
-    }
-}
-
-async function lancarGastoArraia(event) {
-    event.preventDefault();
-    
-    const btn = document.getElementById('btn-salvar-gasto');
-    const desc = document.getElementById('gasto-descricao').value.trim();
-    const valor = Number(document.getElementById('gasto-valor').value) || 0;
-    const cat = document.getElementById('gasto-categoria').value;
-    const arquivoInput = document.getElementById('gasto-arquivo');
-
-    if (!desc || valor <= 0 || !cat) {
-        alert("Preencha todos os campos obrigatórios corretamente!");
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerText = "Processando upload...";
-
-    let urlNotaFinal = null;
-
-    if (arquivoInput && arquivoInput.files.length > 0) {
-        const arquivo = arquivoInput.files[0];
-        const extensao = arquivo.name.split('.').pop();
-        const nomeArquivoUnico = `${Date.now()}_nota.${extensao}`;
-
-        const { data: uploadData, error: uploadError } = await _supabase
-            .storage
-            .from('noatas_fiscais')
-            .upload(nomeArquivoUnico, arquivo);
-
-        if (uploadError) {
-            alert("Erro ao fazer upload da imagem: " + uploadError.message);
-            btn.disabled = false;
-            btn.innerText = "Lançar Despesa";
-            return;
+          }
+        } catch {
+          comprovante = "Link inválido";
         }
+      }
 
-        const { data: urlPublica } = _supabase
-            .storage
-            .from('noatas_fiscais')
-            .getPublicUrl(nomeArquivoUnico);
+      const dataFormatada = despesa.created_at
+        ? new Date(despesa.created_at).toLocaleDateString("pt-BR")
+        : "—";
 
-        urlNotaFinal = urlPublica.publicUrl;
+      return `
+        <tr>
+          <td>${escaparHTML(despesa.descricao)}</td>
+          <td>${escaparHTML(despesa.categoria || "—")}</td>
+          <td>${formatarMoeda(despesa.valor)}</td>
+          <td>${comprovante}</td>
+          <td>
+            ${dataFormatada}
+            <button
+              type="button"
+              class="admin-btn btn-danger"
+              data-acao="excluir-despesa"
+              data-id="${escaparHTML(despesa.id)}">
+              Excluir
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (erro) {
+    console.error("Erro ao carregar despesas:", erro);
+
+    if (tabela) {
+      tabela.innerHTML = `
+        <tr>
+          <td colspan="5">
+            Erro ao carregar despesas. Verifique o acesso ao banco.
+          </td>
+        </tr>
+      `;
     }
 
-    const { error: insertError } = await _supabase
-        .from('gastos_arraia')
-        .insert([{
-            descricao: desc,
-            valor: valor,
-            categoria: cat,
-            url_nota: urlNotaFinal
-        }]);
-
-    if (insertError) {
-        alert("Erro ao salvar despesa: " + insertError.message);
-    } else {
-        alert("Gasto lançado com sucesso no Portal!");
-        document.getElementById('form-adm-gastos').reset();
-        carboardGastosRecarregar();
-    }
-
-    btn.disabled = false;
-    btn.innerText = "Lançar Despesa";
+    throw erro;
+  }
 }
 
-function carboardGastosRecarregar() {
-    carregarGastosPainelAdmin();
-    carregarDadosPainelAdmin();
-}
+async function salvarDespesa(evento) {
+  evento.preventDefault();
+  ocultarMensagem();
 
-async function deletarGastoArraia(id, urlNota) {
-    if (!confirm("Deseja apagar essa despesa? Isso removerá a nota fiscal do Portal.")) return;
+  const descricao = document
+    .getElementById("despesa-descricao")
+    .value.trim();
 
-    if (urlNota && urlNota.trim() !== "") {
-        const nomeArquivo = urlNota.split('/').pop();
-        await _supabase.storage.from('noatas_fiscais').remove([nomeArquivo]);
+  const valorTexto = document
+    .getElementById("despesa-valor")
+    .value.trim();
+
+  const categoria = document
+    .getElementById("despesa-categoria")
+    .value.trim();
+
+  const comprovante = document
+    .getElementById("despesa-comprovante")
+    .value.trim();
+
+  const valor = Number(valorTexto.replace(",", "."));
+
+  if (!descricao) {
+    mostrarMensagem("Informe a descrição da despesa.", "erro");
+    return;
+  }
+
+  if (!Number.isFinite(valor) || valor <= 0) {
+    mostrarMensagem(
+      "Informe um valor válido maior que zero.",
+      "erro"
+    );
+    return;
+  }
+
+  if (comprovante) {
+    try {
+      const url = new URL(comprovante);
+
+      if (!["https:", "http:"].includes(url.protocol)) {
+        throw new Error("Protocolo inválido");
+      }
+    } catch {
+      mostrarMensagem(
+        "Informe um link válido para o comprovante.",
+        "erro"
+      );
+      return;
     }
+  }
+
+  const botao = document.getElementById("btn-salvar-despesa");
+
+  if (botao) botao.disabled = true;
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
 
     const { error } = await _supabase
-        .from('gastos_arraia')
-        .delete()
-        .eq('id', id);
+      .from("despesas")
+      .insert({
+        descricao,
+        valor,
+        categoria: categoria || null,
+        url_comprovante: comprovante || null
+      });
 
-    if (error) {
-        alert("Erro ao apagar: " + error.message);
-    } else {
-        carboardGastosRecarregar();
-    }
+    if (error) throw error;
+
+    document.getElementById("form-despesa").reset();
+
+    mostrarMensagem("Despesa cadastrada com sucesso.");
+    await carregarPainelADM(false);
+  } catch (erro) {
+    console.error("Erro ao salvar despesa:", erro);
+    mostrarMensagem(
+      "Não foi possível cadastrar a despesa.",
+      "erro"
+    );
+  } finally {
+    if (botao) botao.disabled = false;
+  }
 }
 
-window.lancarGastoArraia = lancarGastoArraia;
-window.deletarGastoArraia = deletarGastoArraia;
+async function excluirDespesa(id) {
+  if (
+    !confirm(
+      "Deseja excluir esta despesa? Esta ação não pode ser desfeita."
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const autorizado = await validarAdministrador();
+    if (!autorizado) return;
+
+    const { error } = await _supabase
+      .from("despesas")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    mostrarMensagem("Despesa excluída.");
+    await carregarPainelADM(false);
+  } catch (erro) {
+    console.error("Erro ao excluir despesa:", erro);
+    mostrarMensagem(
+      "Não foi possível excluir a despesa.",
+      "erro"
+    );
+  }
+}
+
+// =====================================================
+// EVENTOS
+// =====================================================
+
+document.addEventListener("DOMContentLoaded", async () => {
+  configurarAbas();
+  configurarBuscaInscricoes();
+
+  document
+    .getElementById("form-login")
+    ?.addEventListener("submit", entrarNoPainel);
+
+  document
+    .getElementById("btn-sair")
+    ?.addEventListener("click", sairDoPainel);
+
+  document
+    .getElementById("form-despesa")
+    ?.addEventListener("submit", salvarDespesa);
+
+  document
+    .getElementById("btn-atualizar-inscricoes")
+    ?.addEventListener("click", async () => {
+      const autorizado = await validarAdministrador();
+      if (!autorizado) return;
+
+      try {
+        await carregarInscricoes();
+        mostrarMensagem("Lista de inscrições atualizada.");
+      } catch {
+        mostrarMensagem(
+          "Não foi possível atualizar a lista.",
+          "erro"
+        );
+      }
+    });
+
+  document
+    .getElementById("form-edicao")
+    ?.addEventListener("submit", salvarEdicaoInscricao);
+
+  document
+    .getElementById("btn-adicionar-acompanhante")
+    ?.addEventListener("click", () => {
+      adicionarCampoAcompanhante();
+    });
+
+  document
+    .getElementById("btn-cancelar-edicao")
+    ?.addEventListener("click", () => {
+      document.getElementById("modal-edicao")?.close();
+    });
+
+  document
+    .getElementById("lista-acompanhantes-edicao")
+    ?.addEventListener("click", (evento) => {
+      const botao = evento.target.closest(
+        ".btn-remover-acompanhante"
+      );
+
+      if (!botao) return;
+
+      botao.closest(".acompanhante-item")?.remove();
+    });
+
+  document.addEventListener("click", async (evento) => {
+    const botao = evento.target.closest("button[data-acao]");
+    if (!botao) return;
+
+    const { acao, id, status } = botao.dataset;
+
+    // Evita cliques repetidos durante uma operação.
+    if (botao.disabled) return;
+
+    botao.disabled = true;
+
+    try {
+      if (acao === "editar-inscricao") {
+        abrirEdicaoInscricao(id);
+      } else if (acao === "excluir-inscricao") {
+        await excluirInscricaoDefinitivamente(id);
+      } else if (acao === "pagamento") {
+        await alterarPagamento(id, status);
+      } else if (acao === "status-inscricao") {
+        await alterarStatusInscricao(id, status);
+      } else if (acao === "excluir-despesa") {
+        await excluirDespesa(id);
+      }
+    } finally {
+      // A tabela pode ter sido redesenhada durante a operação.
+      botao.disabled = false;
+    }
+  });
+
+  const autorizado = await validarAdministrador();
+
+  if (autorizado) {
+    await carregarPainelADM(false);
+  }
+});

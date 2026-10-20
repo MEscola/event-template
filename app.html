@@ -3,253 +3,253 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arraiá ReisFit — Cadastro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Configuração para o link em destaque com imagem no WhatsApp -->
-<meta property="og:site_name" content="Reis Fit">
-<meta property="og:title" content="🔥 LISTA DO ARRAIÁ — REIS FIT 🤠🎉">
-<meta property="og:description" content="Confira quem já confirmou presença, os pratos da festa e garanta seu lugar no Arraiá mais esperado do ano!">
-<meta property="og:image" content="https://mescola.github.io/arraia-reisfit/assets/images/banner.png?v=novo">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://mescola.github.io/arraia-reisfit/?v=novo">
-<meta property="og:type" content="website">
+    <title>Confra ReisFit 2026 — Inscrição</title>
+    <!-- Meta Tags Básicas -->
+    <meta name="description" content="Confirme sua presença na Confra ReisFit 2026 e cadastre seus acompanhantes.">
+
+    <!-- Configuração para o link em destaque com imagem no WhatsApp e Redes Sociais -->
+    <meta property="og:site_name" content="ReisFit">
+    <meta property="og:title" content="🌴 CONFRA REISFIT 2026 — Quem vai? ☀️🍹">
+    <meta property="og:description"
+        content="Confirme sua presença e cadastre seus acompanhantes!">
+    <meta property="og:type" content="website">
+
+    <!-- Imagem de Prévia (Banner) -->
+    <meta property="og:image" content="https://mescola.github.io/confra-reisfit/assets/images/teste-banner.jpeg?v=2026">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://mescola.github.io/confra-reisfit/?v=2026">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap"
+        rel="stylesheet">
+
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/style.css">
-
-    <!-- REDIRECIONAMENTO INTELIGENTE DA FESTA / TRANSPARÊNCIA -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // -------------------------------------------------------------
-            // 🟢 CHAVE SELETORA OFICIAL (PÓS-FESTA)
-            // Para fechar o cadastro e mandar TODOS os alunos para o Portal da Transparência,
-            // basta apagar as duas barras (//) do início da linha abaixo quando a festa acabar:
-            
-            // window.location.href = "transparencia.html";
-            // -------------------------------------------------------------
-
-            // 🕹️ MODO DEV / CHAVE INDIVIDUAL DE TESTES
-            // Permite que você teste as telas alternando via URL sem afetar os alunos.
-            if (window.location.search.includes('teste=1') || localStorage.getItem('modo_desenvolvedor') === 'true') {
-                localStorage.setItem('modo_desenvolvedor', 'true');
-                
-                // Cria e injeta a barra preta da chave seletora dinamicamente no topo do seu navegador
-                const bar = document.createElement('div');
-                bar.style = "background:#111; padding:10px; border-bottom:1px solid #333; text-align:center; font-family:sans-serif; position:sticky; top:0; z-index:9999;";
-                
-                const isTransp = localStorage.getItem('ambiente_site') === 'transparencia';
-                
-                bar.innerHTML = `
-                    <span style="color:#fff; font-size:13px; margin-right:10px; font-weight:bold;">🔧 Modo de Teste:</span>
-                    <label style="position:relative; display:inline-block; width:50px; height:24px; vertical-align:middle;">
-                        <input type="checkbox" id="chave-ambiente" style="opacity:0; width:0; height:0;" ${isTransp ? 'checked' : ''}>
-                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:${isTransp ? '#00BCD4' : '#F44336'}; transition:.4s; border-radius:24px;"></span>
-                    </label>
-                    <span style="color:${isTransp ? '#00BCD4' : '#F44336'}; font-size:13px; margin-left:10px; font-weight:bold;">
-                        ${isTransp ? 'Transparência 📊' : 'Festa Ativa 🤠'}
-                    </span>
-                `;
-                
-                document.body.prepend(bar);
-                
-                // Adiciona o estilo dinâmico do controle deslizante da chave
-                const style = document.createElement('style');
-                style.innerHTML = `
-                    #chave-ambiente + span:before { position:absolute; content:""; height:16px; width:16px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%; ${isTransp ? 'transform:translateX(26px);' : ''} }
-                `;
-                document.head.appendChild(style);
-
-                // Lógica de redirecionamento individual com base na chave do seu navegador
-                if (isTransp && !window.location.pathname.includes('transparencia.html')) {
-                    window.location.href = "transparencia.html";
-                }
-
-                document.getElementById('chave-ambiente').addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        localStorage.setItem('ambiente_site', 'transparencia');
-                        window.location.href = "transparencia.html";
-                    } else {
-                        localStorage.setItem('ambiente_site', 'festa');
-                        window.location.href = "index.html";
-                    }
-                });
-            }
-        });
-    </script>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/app.css">
 </head>
 
 <body>
 
     <header>
-        <img src="assets/images/banner.png" alt="Banner Arraiá ReisFit">
+        <img src="assets/images/teste-banner.jpeg" alt="Confra ReisFit 2026">
     </header>
 
-    <div class="container">
-        <h1>Cadastro</h1>
+    <main class="container">
+        <h1>Confra ReisFit 2026</h1>
 
+        <!-- TELA DE CADASTRO -->
         <section id="tela-cadastro">
+
             <form id="form-inscricao">
 
-                <div class="form-card">
+                <!-- CARD 1: TITULAR -->
+                <section class="form-card">
+                    <h2>1. VAMOS CONFIRMAR SUA PRESENÇA?</h2>
+
                     <div class="form-group">
-                        <label for="nome">Qual o seu nome? (Titular)</label>
-                        <input type="text" id="nome" required placeholder="Digite seu nome completo">
-                        <!-- Instrução visual obrigatória de Nome e Sobrenome / Apelido -->
-                        <small style="color: #aaa; display: block; margin-top: 4px; font-size: 11px; text-align: left;">
-                            Obrigatório informar nome e sobrenome (ou nome e apelido do Box).
+                        <label for="nome_titular">Seu nome completo</label>
+
+                        <input type="text" id="nome_titular" name="nome_titular" required minlength="2" maxlength="120"
+                            autocomplete="name" placeholder="Digite seu nome completo">
+
+                        <!-- <small>
+                            Informe seu nome e sobrenome ou apelido.
+                        </small> -->
+                    </div>
+                </section>
+
+                <!-- CARD 2: PARTICIPAÇÃO -->
+                <section class="form-card">
+                    <h2>2. QUEM VOCÊ VAI LEVAR?</h2>
+                    <p>Escolha uma opção para continuar.</p>
+
+                    <div class="opcoes-participacao">
+
+                        <label class="opcao-participacao" for="participacao-sozinho">
+
+                            <input type="radio" id="participacao-sozinho" name="tipo-participacao" value="sozinho"
+                                required>
+
+
+
+                            <span class="opcao-texto">
+                                Vou sozinho(a)
+
+                            </span>
+                        </label>
+
+                        <label class="opcao-participacao" for="participacao-acompanhantes">
+
+                            <input type="radio" id="participacao-acompanhantes" name="tipo-participacao"
+                                value="acompanhantes" required>
+
+
+                            <span class="opcao-texto">
+                                Vou levar acompanhante(s)
+
+                            </span>
+                        </label>
+
+                    </div>
+                </section>
+
+                <!-- CARD 3: ACOMPANHANTES -->
+                <section class="form-card" id="card-acompanhantes" aria-labelledby="titulo-acompanhantes" hidden>
+
+                    <h2 id="titulo-acompanhantes">3. QUEM VAI COM VOCÊ?</h2>
+
+                    <p>
+                        Informe o nome e a idade de cada acompanhante
+                        para calcular o valor correspondente.
+                    </p>
+
+                    <div id="campos-acompanhantes"></div>
+
+                    <button type="button" id="btn-adicionar-acompanhante" class="btn">
+                        + Adicionar acompanhante
+                    </button>
+
+                    <small>
+                        De 0 a 10 anos: isento.
+                        De 11 a 15 anos: meia.
+                        A partir de 16 anos: integral.
+                    </small>
+                </section>
+
+                <!-- CARD 4: VALORES -->
+                <section class="form-card">
+                    <h2 class="tabela-valores">Tabela de valores</h2>
+
+                    <div class="valores-inscricao">
+                        <p>
+                            <span>A partir de 16 anos (INTEIRA)</span>
+                            <strong>R$ 30,00</strong>
+                        </p>
+
+                        <p>
+                            <span>De 11 a 15 anos (MEIA)</span>
+                            <strong>R$ 15,00</strong>
+                        </p>
+
+                        <p>
+                            <span>De 0 a 10 anos </span>
+                            <strong>Grátis</strong>
+                        </p>
+                    </div>
+
+
+                    <div class="pix-box" id="box-total-previsto" hidden>
+                        <p>Total previsto</p>
+
+                        <div class="pix-value" id="total-previsto" aria-live="polite">
+                            R$ 30,00
+                        </div>
+
+                        <small>
+                            Valor calculado conforme as idades informadas.
                         </small>
                     </div>
 
-                    <!-- Componente Switch Discreto e Confidencial para a Comunidade -->
-                    <div class="sponsor-box">
-                        <div class="sponsor-info">
-                            <strong>Sou Parceiro do Arraiá!</strong>
-                            <p>Vou dar uma força extra com as premiações e brindes do nosso bingo.</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="patrocinador" onchange="controlarFluxoPatrocinio()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                </section>
 
-                    <!-- MENSAGEM E INPUT DO CÓDIGO CONFIDENCIAL -->
-                    <div id="grupo-valor-doacao" class="form-group hidden"
-                        style="margin-top: -10px; margin-bottom: 20px; border-left: 3px solid #FFC107; padding-left: 15px;">
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <label for="codigo_parceiro" style="color: #FFC107; font-weight: bold;">Digite o código confidencial de parceiro:</label>
-                            <input type="text" id="codigo_parceiro" placeholder="Peça o Codigo para Elaine"
-                                style="border-color: #FFC107;">
-                        </div>
-                        <div id="aviso-parceiro-valido" class="hidden">
-                            <p style="color: #4CAF50; font-weight: bold; margin: 0 0 5px 0; font-size: 14px;">Benefício Ativado com Sucesso!</p>
-                            <small style="color: #bbb; display: block; font-size: 13px; line-height: 1.4;">
-                                Sua credencial de parceiro do Box foi reconhecida. Lembre-se de detalhar abaixo os seus acompanhantes e os pratos para do Arraiá!
-                            </small>
-                        </div>
-                    </div>
+                <button type="submit" id="btn-enviar" class="btn btn-primary">
+                    Confirmar inscrição
+                </button>
 
-                    <div class="form-group">
-                        <label for="tipo_grupo">Como você vai?</label>
-                        <select id="tipo_grupo" onchange="ajustarFluxoGrupo()" required>
-                            <option value="Solteiro">Vou Sozinho (1 pessoa)</option>
-                            <option value="Casal/Família">Vou em Casal / Família</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="campos-acompanhantes" class="form-card hidden">
-                    <div class="form-group">
-                        <label for="qtd_conjuge">Quantidade de Cônjuges ou Filhos MAIORES de 13 anos- (R$ 15,00 cada)</label>
-                        <input type="number" id="qtd_conjuge" min="0" value="0" oninput="calcularPix()">
-                    </div>
-                    <div class="form-group">
-                        <label for="qtd_amigos">Quantidade de Amigos/Visitantes (R$ 20,00 cada)</label>
-                        <input type="number" id="qtd_amigos" min="0" value="0" oninput="calcularPix()">
-                    </div>
-                    <div class="form-group">
-                        <label for="criancas">Crianças MENORES de 13 anos (Não pagam)</label>
-                        <textarea id="criancas" rows="2" placeholder="Coloque o nomes e idades para controle..."></textarea>
-                    </div>
-                </div>
-
-                <div class="form-card">
-                    <div class="form-group">
-                        <label for="leva_caldo">Você vai levar algum caldo?</label>
-                        <select id="leva_caldo" onchange="controlarOpcoesCaldos()">
-                            <option value="Não">Não</option>
-                            <option value="Sim">Sim</option>
-                        </select>
-                    </div>
-
-                    <div id="grupo-sabores-caldo" class="form-group hidden">
-                        <label for="sabor_caldo">Escolha o sabor do caldo:</label>
-                        <select id="sabor_caldo">
-                        </select>
-                    </div>
-
-                    <div id="secao-pratos-dinamica">
-                        <div id="fluxo-solteiro" class="form-group">
-                            <label for="prato_solteiro">Qual o prato você vai levar?</label>
-                            <select id="prato_solteiro" onchange="controlarSaborSolteiro()">
-                                <option value="">Selecione...</option>
-                                <option value="Doce">Prato Doce</option>
-                                <option value="Salgado">Prato Salgado</option>
-                            </select>
-                            <div id="grupo-sabor-solteiro" class="form-group hidden" style="margin-top:10px;">
-                                <label for="sabor_prato_solteiro">Especifique o prato que vai trazer:</label>
-                                <input type="text" id="sabor_prato_solteiro" placeholder="Ex: Bolo de milho">
-                            </div>
-                        </div>
-
-                        <div id="fluxo-familia" class="hidden">
-                            <div class="form-group">
-                                <label for="sabor_doce_familia">Seu Prato Doce (Obrigatório):</label>
-                                <input type="text" id="sabor_doce_familia" placeholder="Ex: Canjica Doce">
-                            </div>
-                            <div class="form-group">
-                                <label for="sabor_salgado_familia">Seu Prato Salgado (Obrigatório):</label>
-                                <input type="text" id="sabor_salgado_familia" placeholder="Ex: Empadão">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pix-box">
-                    <p>Total do investimento via PIX</p>
-                    <div class="pix-value" id="label-pix">R$ 15,00</div>
-                    <div class="pix-key" style="margin-bottom: 10px;"></div>
-
-                    <button type="button" id="btn-copiar-pix" class="btn"
-                        style="background: #FF9800; color: white; padding: 8px 15px; font-size: 13px; width: auto; border-radius: 4px; margin: 5px auto 0 auto; display: block;"
-                        onclick="copiarChavePixRapido()">
-                        Copiar Chave PIX
-                    </button>
-                </div>
-
-                <button type="submit" id="btn-enviar" class="btn btn-primary">Confirmar Cadastro</button>
             </form>
         </section>
-    </div>
+
+        <!-- TELA DE CONFIRMAÇÃO E PIX -->
+        <section id="tela-confirmacao" class="form-card tela-confirmacao" aria-labelledby="titulo-confirmacao"
+            aria-live="polite" hidden>
+
+            <div class="confirmacao-icone" aria-hidden="true">✓</div>
+
+            <h2 id="titulo-confirmacao">Inscrição realizada!</h2>
+
+            <p>
+                Sua presença foi registrada. Agora, confira o valor
+                previsto e copie a chave Pix para fazer o pagamento.
+            </p>
+
+            <div class="pix-resumo">
+                <span>Nome do titular</span>
+                <strong id="confirmacao-nome"></strong>
+
+                <span>Pessoas no grupo</span>
+                <strong id="confirmacao-pessoas"></strong>
+
+                <span>Valor previsto</span>
+                <strong id="confirmacao-valor" class="pix-valor-final"></strong>
+
+                <span>Status do pagamento</span>
+                <strong class="status-pendente">Pendente</strong>
+            </div>
+
+            <div class="pix-pagamento">
+                <h3>Pagamento via Pix</h3>
+
+                <p>
+                    Copie a chave abaixo e utilize-a no aplicativo
+                    do seu banco.
+                </p>
+
+                <div class="pix-chave" id="pix-chave-container">
+                    <span id="chave-pix">DIGITAR A CHAVE PIX AQUI</span>
+                </div>
+
+                <button type="button" id="btn-copiar-pix" class="btn btn-primary">
+                    Copiar chave Pix
+                </button>
+
+                <p id="mensagem-pix" class="mensagem-pix" role="status" aria-live="polite"></p>
+
+                <small>
+                    Confira o nome do destinatário no aplicativo do banco
+                    antes de confirmar o pagamento.
+                </small>
+            </div>
+
+            <p class="aviso-pagamento">
+                Importante: sua inscrição está registrada, mas o pagamento
+                continuará pendente até a confirmação pelo financeiro.
+            </p>
+
+            <a href="lista.html" class="btn btn-voltar-lista">
+                Ver lista de participantes
+            </a>
+        </section>
+
+    </main>
 
     <nav>
         <div class="nav-bar">
-            <a href="index.html" class="nav-item active">
-                <span class="nav-icon">🔥</span>
-                <span>Eu VOU!</span>
+            <a href="app.html" class="nav-item active">
+                <span class="nav-icon">📝</span>
+                <span>Inscrição</span>
             </a>
+
             <a href="lista.html" class="nav-item">
-                <span class="nav-icon">👀</span>
+                <span class="nav-icon">👥</span>
                 <span>Quem vai?</span>
             </a>
-            <a href="#" class="nav-item" onclick="verificarAcessoAdmRedirecionamento()">
+
+            <a href="adm.html" class="nav-item">
                 <span class="nav-icon">🔑</span>
                 <span>ADM</span>
             </a>
         </div>
     </nav>
 
-    <script src="js/supabase.js?v=3"></script>
-    <script src="js/cadastro.js?v=3"></script>
-    <script>
-        function verificarAcessoAdmRedirecionamento() {
-            const senhaDigitada = prompt("Digite a senha do Financeiro ADM:");
-            if (!senhaDigitada) return;
+    <script src="js/supabase.js?v=6"></script>
+    <script src="js/cadastro.js?v=6"></script>
 
-            const senhaTratada = senhaDigitada.toLowerCase().trim();
-            const senhaMascarada = "6202tifsier";
-            const senhaCorreta = senhaMascarada.split('').reverse().join('');
-
-            if (senhaTratada === senhaCorreta) {
-                sessionStorage.setItem('reisfit_adm_auth', 'autorizado');
-                window.location.href = "adm.html?v=3";
-            } else {
-                alert("Senha incorrecta, acesso negado!");
-            }
-        }
-    </script>
 </body>
 
 </html>

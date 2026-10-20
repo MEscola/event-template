@@ -3,72 +3,84 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arraiá ReisFit — Quem vai? 👀</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Confra ReisFit 2026 — Quem vai?</title>
+    <meta name="description" content="Confira quem confirmou presença na Confra ReisFit 2026 e o status do pagamento.">
+
+    <meta property="og:site_name" content="ReisFit">
+    <meta property="og:title" content="Confra ReisFit 2026 — Quem vai?">
+    <meta property="og:description"
+        content="Consulte os titulares inscritos, o tamanho dos grupos e o status do pagamento.">
+    <meta property="og:type" content="website">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Garante que a seção apareça perfeitamente na tela */
-        #tela-lista {
-            display: block;
-        }
-        /* Ajuste de distanciamento das bordas da tela para mobile */
-        .container {
-            padding: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/lista.css">
+
+
 </head>
 
 <body>
 
     <header>
-        <img src="assets/images/banner.png" alt="Banner Arraiá">
+        <img src="assets/images/teste-banner.jpeg" alt="Confra ReisFit 2026">
     </header>
 
-    <div class="container">
+    <main class="container">
         <section id="tela-lista">
-            <!-- MANTIDO O AMARELO ORIGINAL DO ARRAIÁ AQUI: -->
-            <h2 style="color: #FFC107; margin-bottom: 20px; font-weight: 700; letter-spacing: 0.5px; text-align: center;">Lista de Pratos e Convidados 🥐</h2>
-            <div id="lista-alunos-container">Carregando dados ...</div>
-        </section>
-    </div>
+            <h1 >
+                Quem vai?
+            </h1>
 
-     <nav>
+            <p style="text-align: center; color: #aaa;">
+                Confira as inscrições e o status do pagamento.
+            </p>
+
+
+            <section class="contador-confirmados" id="contador-confirmados" hidden>
+                <span class="contador-legenda">JÁ SOMOS</span>
+                <strong id="total-confirmados">Carregando...</strong>
+                <span class="contador-descricao">
+                    pessoas confirmadas na festa
+                </span>
+            </section>
+
+            <!-- <div class="share-container" style="text-align: center; margin: 12px 0;">
+                <a href="https://api.whatsapp.com/send?text=%F0%9F%8F%B4%20*CONFRA%20REISFIT%202026*%20%E2%98%80%EF%B8%8F%F0%9F%8D%B9%0A%0AQuer%20ver%20quem%20j%C3%A1%20confirmou%20presen%C3%A7a%20na%20festa%3F%0A%0AAcesse%20o%20link:%0Ahttps://mescola.github.io/confra-reisfit/?v=2026"
+                    target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+                    <span>📲</span> Compartilhar lista
+                </a>
+            </div> -->
+
+            <div id="lista-alunos-container" aria-live="polite">
+                Carregando inscrições...
+            </div>
+        </section>
+    </main>
+
+    <nav>
         <div class="nav-bar">
-            <a href="index.html" class="nav-item active">
-                <span class="nav-icon">🔥</span>
-                <span>Eu VOU!</span>
+            <a href="app.html" class="nav-item">
+                <span class="nav-icon">📝</span>
+                <span>Inscrição</span>
             </a>
-            <a href="lista.html" class="nav-item">
-                <span class="nav-icon">👀</span>
+
+            <a href="lista.html" class="nav-item active" aria-current="page">
+                <span class="nav-icon">👥</span>
                 <span>Quem vai?</span>
             </a>
-            <a href="#" class="nav-item" onclick="verificarAcessoAdmRedirecionamento()">
+
+            <a href="adm.html" class="nav-item">
                 <span class="nav-icon">🔑</span>
                 <span>ADM</span>
             </a>
         </div>
     </nav>
 
-    <!-- Forçando a atualização total de cache com o parâmetro v=6 -->
-    <script src="js/supabase.js?v=6"></script>
-    <script src="js/lista.js?v=6"></script>
-    <script>
-        function verificarAcessoAdmRedirecionamento() {
-            const senhaDigitada = prompt("Digite a senha do Financeiro ADM:");
-            if (!senhaDigitada) return;
+    <script src="js/supabase.js?v=4"></script>
+    <script src="js/lista.js?v=4"></script>
 
-            const senhaTratada = senhaDigitada.toLowerCase().trim();
-            const senhaMascarada = "6202tifsier";
-            const senhaCorreta = senhaMascarada.split('').reverse().join('');
-
-            if (senhaTratada === senhaCorreta) {
-                sessionStorage.setItem('reisfit_adm_auth', 'autorizado');
-                window.location.href = "adm.html?v=6";
-            } else {
-                alert("Senha incorreta, acesso negado!");
-            }
-        }
-    </script>
 </body>
+
 </html>
