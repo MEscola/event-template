@@ -12,8 +12,7 @@
     <!-- Configuração para o link em destaque com imagem no WhatsApp e Redes Sociais -->
     <meta property="og:site_name" content="ReisFit">
     <meta property="og:title" content="🌴 CONFRA REISFIT 2026 — Quem vai? ☀️🍹">
-    <meta property="og:description"
-        content="Confirme sua presença e cadastre seus acompanhantes!">
+    <meta property="og:description" content="Confirme sua presença e cadastre seus acompanhantes!">
     <meta property="og:type" content="website">
 
     <!-- Imagem de Prévia (Banner) -->
@@ -111,6 +110,12 @@
 
                     <div id="campos-acompanhantes"></div>
 
+                    <p id="erro-acompanhantes" class="erro-acompanhantes" role="alert" hidden>
+                        ⚠️ Há campos de acompanhantes que precisam ser preenchidos.
+                        Informe o nome e a idade de cada pessoa que vai com você.
+                        Se adicionou um campo por engano, toque em "Remover" nesse campo.
+                    </p>
+
                     <button type="button" id="btn-adicionar-acompanhante" class="btn">
                         + Adicionar acompanhante
                     </button>
@@ -169,9 +174,51 @@
         <section id="tela-confirmacao" class="form-card tela-confirmacao" aria-labelledby="titulo-confirmacao"
             aria-live="polite" hidden>
 
-            <div class="confirmacao-icone" aria-hidden="true">✓</div>
+            <div class="confirmacao-titulo">
 
-            <h2 id="titulo-confirmacao">Inscrição realizada!</h2>
+                <div class="grill" aria-hidden="true">
+                    <span class="selo-check">✓</span>
+
+                    <svg viewBox="0 0 64 64">
+                        <!-- fumaça -->
+                        <path class="fumaca f1" d="M14 14C10 11 18 8 14 4" />
+                        <path class="fumaca f2" d="M50 14C46 11 54 8 50 4" />
+
+                        <!-- chamas -->
+                        <g class="chama c1">
+                            <path
+                                d="M18 16C21 20 24 23 22 27C21 28.5 19.5 29 18 29C16 29 14 28.5 13 26.5C12 23 16 21 18 16Z"
+                                fill="#FF5722" />
+                        </g>
+                        <g class="chama c2">
+                            <path d="M32 6C36 13 41 17 39 24C38 27 35.5 29 32 29C28.5 29 26 27 25 24C24 19 29 17 32 6Z"
+                                fill="#FF5722" />
+                            <path
+                                d="M32 17C34 20 35.5 22.5 34.5 25C34 26.5 33 27.5 32 27.5C31 27.5 30 26.5 29.5 25C28.5 22.5 30.5 20 32 17Z"
+                                fill="#FFC107" />
+                        </g>
+                        <g class="chama c3">
+                            <path
+                                d="M46 16C49 20 52 23 51 26.5C50 28.5 48 29 46 29C44 29 42 28.5 41 27C40 23 44 21 46 16Z"
+                                fill="#FF5722" />
+                        </g>
+
+                        <!-- corpo da churrasqueira -->
+                        <path d="M8 31H56C56 44 46 52 32 52C18 52 8 44 8 31Z" fill="#4A3A30" />
+                        <rect x="5" y="28" width="54" height="5" rx="2.5" fill="#2F241D" />
+                        <path d="M59 30H63" stroke="#2F241D" stroke-width="3" stroke-linecap="round" />
+                        <path d="M14 38C20 42 44 42 50 38" stroke="#E8590C" stroke-width="2" stroke-linecap="round"
+                            fill="none" opacity="0.7" />
+
+                        <!-- pernas -->
+                        <path d="M22 50L17 62M42 50L47 62" stroke="#2F241D" stroke-width="3" stroke-linecap="round" />
+                    </svg>
+
+
+                </div>
+
+                <h2 id="titulo-confirmacao">INSCRIÇÃO REALIZADA!</h2>
+            </div>
 
             <p>
                 Sua presença foi registrada. Agora, confira o valor
@@ -196,8 +243,7 @@
                 <h3>Pagamento via Pix</h3>
 
                 <p>
-                    Copie a chave abaixo e utilize-a no aplicativo
-                    do seu banco.
+                    👇 Toque no botão para copiar a chave e cole no app do seu banco.
                 </p>
 
                 <div class="pix-chave" id="pix-chave-container">

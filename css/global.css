@@ -73,14 +73,7 @@
     /* Menu */
     --nav-bg: rgba(255, 255, 255, 0.97);
 
-    /* Gradientes (Vibe Verão / Confra) */
-    --gradient-sunset: linear-gradient(
-        135deg,
-        #FF5722 0%,
-        #FF8A80 50%,
-        #FFC107 100%
-    );
-
+    
     --gradient-pool: linear-gradient(135deg, #E8F8FA 0%, #FFFFFF 100%);
     -gradient-sunset: linear-gradient(135deg, #F4511E 0%, #FF8A65 55%, #FFC107 100%);
     

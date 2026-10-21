@@ -1,61 +1,74 @@
+/* =====================================================
+   CONFRA REISFIT 2026 — LISTA.CSS
+   Lista pública de inscritos (tema tropical claro)
+   Depende de css/global.css
+   ===================================================== */
+
+/* ---------- Estrutura ---------- */
+
 #tela-lista {
-            display: block;
-        }
+    display: block;
+}
 
-        .container {
-            padding: 15px;
-        }
+.container {
+    width: min(100% - 24px, 620px);
+    margin: 0 auto;
+    padding: 15px 0 36px;
+}
 
-        #lista-alunos-container {
-            margin-top: 20px;
-        }
-
-/* Lista pública — Confra ReisFit 2026 */
-
-
-h1 {
+.container h1 {
     margin: 0 0 20px;
-    color: var(--text-main, #fff);
+    color: var(--text-main);
     font-size: clamp(1.4rem, 5vw, 1.9rem);
     line-height: 1.25;
     text-align: center;
 }
-/* contador */
+
+#lista-alunos-container {
+    margin-top: 20px;
+}
+
+/* ---------- Contador de confirmados ---------- */
 
 .contador-confirmados {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 24px;
     padding: 24px 16px;
-    background: #1a1e1f;
-    border: 1px solid rgba(46, 196, 182, 0.3);
-    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, #F4511E 0%, #FF7043 100%);
+    border: 1px solid var(--primary-hover);
+    border-radius: var(--radius-card);
+    box-shadow: 0 8px 22px rgba(255, 87, 34, 0.28);
     text-align: center;
 }
 
 .contador-confirmados.meta-atingida {
-    border-color: #2ec4b6;
-    box-shadow: 0 0 16px rgba(46, 196, 182, 0.2);
+    background: linear-gradient(135deg, #00838F 0%, #00ACC1 100%);
+    border-color: var(--accent-hover);
+    box-shadow: 0 8px 22px rgba(0, 172, 193, 0.30);
 }
 
 .contador-legenda {
-    color: #2ec4b6;
+    color: rgba(255, 255, 255, 0.92);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 1.5px;
 }
 
 #total-confirmados {
-    color: #ffc857;
-    font-size: clamp(2rem, 7vw, 3rem);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 8vw, 3.4rem);
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .contador-descricao {
-    color: #d0d5d5;
+    color: rgba(255, 255, 255, 0.95);
     font-size: 0.95rem;
 }
 
@@ -63,41 +76,25 @@ h1 {
     display: none !important;
 }
 
+/* ---------- Card de inscrição ---------- */
+
 .inscricao-card {
-    background: rgba(255, 255, 255, 0.04);
-    padding: 18px;
+    margin-bottom: 12px;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--gold-color);
     border-radius: 12px;
-    margin-bottom: 14px;
-    border-left: 4px solid #FFC107;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-shadow);
 }
 
-/* ---------- BOTÃO DE COMPARTILHAMENTO WHATSAPP ---------- */
-
-.btn-whatsapp {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background-color: #25D366;
-    color: #FFFFFF;
-    font-weight: 700;
-    font-size: 0.95rem;
-    padding: 12px 20px;
-    border-radius: var(--radius-field);
-    text-decoration: none;
-    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
-    transition: transform var(--transition-fast), background-color var(--transition-fast);
+/* Borda lateral muda conforme o pagamento */
+.inscricao-card:has(.status-pago) {
+    border-left-color: var(--success-color);
 }
 
-.btn-whatsapp:hover {
-    background-color: #20BA5A;
-    color: #FFFFFF;
-    transform: translateY(-2px);
-}
-
-.btn-whatsapp:active {
-    transform: scale(0.98);
+.inscricao-card:has(.status-pendente) {
+    border-left-color: var(--gold-color);
 }
 
 .inscricao-cabecalho {
@@ -109,42 +106,74 @@ h1 {
 
 .inscricao-nome {
     min-width: 0;
+    color: var(--text-main);
     overflow-wrap: anywhere;
 }
 
 .inscricao-quantidade {
-    color: #aaa;
-    font-size: 13px;
     margin: 2px 0 0;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
 }
 
+/* ---------- Status de pagamento ---------- */
+
 .status-pagamento {
-    flex-shrink: 0;
     display: inline-block;
+    flex-shrink: 0;
     padding: 5px 11px;
     border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .status-pago {
-    color: #4CAF50;
-    background: rgba(76, 175, 80, 0.12);
+    color: #176A40;
+    background: var(--success-soft);
 }
 
 .status-pendente {
-    color: #FF9800;
-    background: rgba(255, 152, 0, 0.12);
+    color: #745300;
+    background: var(--warning-soft);
 }
+
+/* ---------- Estados da lista ---------- */
 
 .lista-vazia,
 .lista-erro {
-    text-align: center;
     padding: 30px 16px;
-    color: #aaa;
+    color: var(--text-secondary);
+    text-align: center;
 }
 
 .lista-erro {
-    color: #EF5350;
+    color: var(--danger-color);
 }
 
+/* ---------- Botão WhatsApp ---------- */
+
+.btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    color: #fff;
+    background-color: #25D366;
+    border-radius: var(--radius-field);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-whatsapp:hover {
+    color: #fff;
+    background-color: #1FA855;
+    transform: translateY(-2px);
+}
+
+.btn-whatsapp:active {
+    transform: scale(0.98);
+}

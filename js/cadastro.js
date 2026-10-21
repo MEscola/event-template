@@ -98,7 +98,7 @@ function obterTentativaPendente(payload) {
 
         if (!tentativaSalva.chave) {
             throw new Error(
-                "A tentativa anterior está inconsistente. Verifique a inscrição com a organização antes de enviar novamente."
+                "A tentativa anterior está inconsistente. Verifique a inscrição com a organização antes de tentar novamente."
             );
         }
 
@@ -192,6 +192,7 @@ function obterCategoriaIdade(idade) {
 function atualizarCategoriaAcompanhante(item) {
     const campoIdade = item.querySelector(".idade-acompanhante");
     const indicador = item.querySelector(".categoria-acompanhante");
+    const valorElemento = item.querySelector(".acompanhante-valor");
 
     if (!campoIdade || !indicador) return;
 
@@ -202,6 +203,8 @@ function atualizarCategoriaAcompanhante(item) {
     if (textoIdade === "") {
         indicador.textContent = "Informe a idade para calcular o valor.";
         indicador.classList.add("categoria-neutra");
+
+        if (valorElemento) valorElemento.textContent = "";
         return;
     }
 
@@ -211,6 +214,8 @@ function atualizarCategoriaAcompanhante(item) {
     if (!categoria) {
         indicador.textContent = "Informe uma idade válida entre 0 e 120.";
         indicador.classList.add("categoria-invalida");
+
+        if (valorElemento) valorElemento.textContent = "";
         return;
     }
 
@@ -218,6 +223,13 @@ function atualizarCategoriaAcompanhante(item) {
         `${categoria.nome} — ${moedaBRL(categoria.valor)}`;
 
     indicador.classList.add(categoria.classe);
+
+    // Valor do acompanhante no cabeçalho do bloco.
+    if (valorElemento) {
+        valorElemento.textContent = categoria.valor === 0
+            ? "Grátis"
+            : moedaBRL(categoria.valor);
+    }
 }
 
 // ---------- Numeração dos acompanhantes ----------
@@ -231,15 +243,20 @@ function renumerarAcompanhantes() {
 
     itens.forEach((item, indice) => {
         const numero = indice + 1;
-        const titulo = item.querySelector(".acompanhante-titulo");
+        const bolinha = item.querySelector(".acompanhante-numero");
+        const rotulo = item.querySelector(".acompanhante-rotulo");
         const botaoRemover = item.querySelector(".remover-acompanhante");
         const campoNome = item.querySelector(".nome-acompanhante");
         const campoIdade = item.querySelector(".idade-acompanhante");
 
         item.dataset.numero = String(numero);
 
-        if (titulo) {
-            titulo.textContent = `Acompanhante ${numero}`;
+        if (bolinha) {
+            bolinha.textContent = String(numero);
+        }
+
+        if (rotulo) {
+            rotulo.textContent = `Acompanhante ${numero}`;
         }
 
         if (botaoRemover) {
@@ -326,9 +343,35 @@ function calcularTotalPrevisto() {
     return total;
 }
 
+// ---------- Aviso: faltam acompanhantes ----------
+
+function mostrarErroAcompanhantes() {
+    const card = document.getElementById("card-acompanhantes");
+    const erro = document.getElementById("erro-acompanhantes");
+
+    if (!card || !erro) return;
+
+    erro.hidden = false;
+
+    // Reinicia a animação caso o erro apareça mais de uma vez.
+    card.classList.remove("com-erro");
+    void card.offsetWidth;
+    card.classList.add("com-erro");
+
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function limparErroAcompanhantes() {
+    const card = document.getElementById("card-acompanhantes");
+    const erro = document.getElementById("erro-acompanhantes");
+
+    if (erro) erro.hidden = true;
+    if (card) card.classList.remove("com-erro");
+}
+
 // ---------- Adicionar acompanhante ----------
 
-function adicionarAcompanhante() {
+function adicionarAcompanhante(focar = true) {
     const container = document.getElementById("campos-acompanhantes");
 
     if (!container) {
@@ -353,13 +396,27 @@ function adicionarAcompanhante() {
     const item = document.createElement("div");
     item.className = "acompanhante-item";
 
-    // Cabeçalho do bloco
+    // Cabeçalho do bloco: bolinha numerada + título + valor + remover
     const cabecalho = document.createElement("div");
     cabecalho.className = "acompanhante-cabecalho";
 
     const titulo = document.createElement("h3");
     titulo.className = "acompanhante-titulo";
-    titulo.textContent = `Acompanhante ${numero}`;
+
+    const bolinha = document.createElement("span");
+    bolinha.className = "acompanhante-numero";
+    bolinha.setAttribute("aria-hidden", "true");
+    bolinha.textContent = String(numero);
+
+    const rotulo = document.createElement("span");
+    rotulo.className = "acompanhante-rotulo";
+    rotulo.textContent = `Acompanhante ${numero}`;
+
+    titulo.append(bolinha, rotulo);
+
+    const valor = document.createElement("span");
+    valor.className = "acompanhante-valor";
+    valor.setAttribute("aria-live", "polite");
 
     const botaoRemover = document.createElement("button");
     botaoRemover.type = "button";
@@ -372,18 +429,22 @@ function adicionarAcompanhante() {
 
     botaoRemover.addEventListener("click", () => {
         item.remove();
+
+        // Esconde o aviso quando a pessoa remove um campo.
+        limparErroAcompanhantes();
+
         renumerarAcompanhantes();
         calcularTotalPrevisto();
     });
 
-    cabecalho.append(titulo, botaoRemover);
+    cabecalho.append(titulo, valor, botaoRemover);
 
     // Campo de nome
     const grupoNome = document.createElement("div");
     grupoNome.className = "form-group";
 
     const labelNome = document.createElement("label");
-    labelNome.textContent = "Nome completo";
+    labelNome.append("Nome completo");
 
     const inputNome = document.createElement("input");
     inputNome.type = "text";
@@ -402,7 +463,7 @@ function adicionarAcompanhante() {
     grupoIdade.className = "form-group";
 
     const labelIdade = document.createElement("label");
-    labelIdade.textContent = "Idade";
+    labelIdade.append("Idade");
 
     const inputIdade = document.createElement("input");
     inputIdade.type = "number";
@@ -410,6 +471,7 @@ function adicionarAcompanhante() {
     inputIdade.min = "0";
     inputIdade.max = "120";
     inputIdade.step = "1";
+    inputIdade.inputMode = "numeric";
     inputIdade.placeholder = "Digite a idade";
     inputIdade.required = true;
 
@@ -421,11 +483,8 @@ function adicionarAcompanhante() {
     indicador.setAttribute("aria-live", "polite");
     indicador.textContent = "Informe a idade para calcular o valor.";
 
-    grupoIdade.appendChild(indicador);
-    grupoIdade.appendChild(inputIdade);
-
-    // Mantém o campo de idade antes do indicador.
-    grupoIdade.insertBefore(inputIdade, indicador);
+    // Label (com o input dentro) e, logo abaixo, o indicador.
+    grupoIdade.append(labelIdade, indicador);
 
     item.append(cabecalho, grupoNome, grupoIdade);
     container.appendChild(item);
@@ -435,7 +494,9 @@ function adicionarAcompanhante() {
     renumerarAcompanhantes();
     calcularTotalPrevisto();
 
-    inputNome.focus();
+    if (focar) {
+        inputNome.focus();
+    }
 }
 
 // ---------- Participação ----------
@@ -453,11 +514,39 @@ function atualizarParticipacao() {
         container.replaceChildren();
     }
 
+    limparErroAcompanhantes();
+
+    // Abre o primeiro campo para a pessoa não ficar com a seção vazia.
+    if (acompanhado && container && container.children.length === 0) {
+        adicionarAcompanhante(false);
+    }
+
     renumerarAcompanhantes();
     calcularTotalPrevisto();
 }
 
 // ---------- Validar acompanhantes ----------
+
+function acompanhantesEstaoPreenchidos() {
+    const container = document.getElementById("campos-acompanhantes");
+
+    if (!container) return false;
+
+    const itens = container.querySelectorAll(".acompanhante-item");
+
+    // É necessário haver pelo menos um acompanhante quando essa opção foi escolhida.
+    if (itens.length === 0) return false;
+
+    return Array.from(itens).every(item => {
+        const nome =
+            item.querySelector(".nome-acompanhante")?.value.trim() || "";
+
+        const idade =
+            item.querySelector(".idade-acompanhante")?.value.trim() || "";
+
+        return nome.length >= 2 && idade !== "";
+    });
+}
 
 function coletarAcompanhantes() {
     const container = document.getElementById("campos-acompanhantes");
@@ -619,10 +708,29 @@ window.addEventListener("DOMContentLoaded", () => {
             radio.addEventListener("change", atualizarParticipacao);
         });
 
-    botaoAdicionar?.addEventListener("click", adicionarAcompanhante);
+    botaoAdicionar?.addEventListener("click", () => adicionarAcompanhante());
     botaoCopiarPix?.addEventListener("click", copiarChavePix);
 
     atualizarParticipacao();
+
+    // O navegador pode bloquear o envio antes do evento submit por causa de required.
+    // Este evento mostra o aviso HTML quando nome ou idade estiverem vazios.
+    formulario.addEventListener("invalid", event => {
+        if (
+            estaIndoAcompanhado() &&
+            event.target.matches(".nome-acompanhante, .idade-acompanhante")
+        ) {
+            mostrarErroAcompanhantes();
+        }
+    }, true);
+
+    // O aviso some assim que a pessoa começa a corrigir os campos.
+    const containerAcompanhantes =
+        document.getElementById("campos-acompanhantes");
+
+    containerAcompanhantes?.addEventListener("input", () => {
+        limparErroAcompanhantes();
+    });
 
     let envioEmAndamento = false;
     let inscricaoRegistrada = false;
@@ -664,16 +772,17 @@ window.addEventListener("DOMContentLoaded", () => {
             }
 
             // 3. Validar acompanhantes.
-            const acompanhantes = coletarAcompanhantes();
-
             if (
                 tipoParticipacao === "acompanhantes" &&
-                acompanhantes.length === 0
+                !acompanhantesEstaoPreenchidos()
             ) {
-                throw new Error(
-                    "Adicione pelo menos um acompanhante ou escolha a opção de ir sozinho(a)."
-                );
+                mostrarErroAcompanhantes();
+                return;
             }
+
+            limparErroAcompanhantes();
+
+            const acompanhantes = coletarAcompanhantes();
 
             if (
                 tipoParticipacao !== "acompanhantes" &&
