@@ -1,0 +1,193 @@
+/* Estilo da página de redefinição de senha — Confra ReisFit
+   Salve em css/redefinir-senha.css e inclua no <head>.
+*/
+:root {
+  color-scheme: light;
+  --rf-orange: #f0440b;
+  --rf-orange-hover: #d93605;
+  --rf-turquoise: #11b8bd;
+  --rf-turquoise-deep: #078f99;
+  --rf-ink: #202a2d;
+  --rf-muted: #697579;
+  --rf-cream: #fffaf0;
+  --rf-card: #ffffff;
+  --rf-border: #e7e3d9;
+  --rf-focus: rgb(17 184 189 / 25%);
+  --rf-shadow: 0 22px 65px rgb(48 50 42 / 18%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #f7f3e8;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 32px 18px;
+  display: grid;
+  place-items: center;
+  color: var(--rf-ink);
+  font-family: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(255 224 127 / 72%), transparent 48%),
+    linear-gradient(145deg, #fff9e9 0%, #f4f4e8 48%, #def7f3 100%);
+}
+
+main {
+  position: relative;
+  width: min(100%, 460px);
+  padding: clamp(28px, 7vw, 46px);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 88%);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: var(--rf-shadow);
+  isolation: isolate;
+}
+
+/* Faixa de cor que remete ao laranja do banner e à água turquesa. */
+main::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 7px;
+  background: linear-gradient(90deg, var(--rf-orange) 0 58%, var(--rf-turquoise) 58% 100%);
+  content: "";
+}
+
+main::after {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: -62px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(17 184 189 / 9%), transparent 70%);
+  content: "";
+  pointer-events: none;
+}
+
+h1 {
+  margin: 0 0 12px;
+  color: var(--rf-orange);
+  font-size: clamp(1.8rem, 7vw, 2.35rem);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+#mensagem {
+  min-height: 1.6em;
+  margin: 0 0 24px;
+  color: var(--rf-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+#form-senha[hidden] {
+  display: none !important;
+}
+
+#form-senha:not([hidden]) {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  margin-top: 4px;
+  color: var(--rf-ink);
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+input[type="password"] {
+  width: 100%;
+  min-height: 50px;
+  margin: 0 0 8px;
+  padding: 12px 15px;
+  border: 1px solid var(--rf-border);
+  border-radius: 12px;
+  outline: none;
+  background: #fffefa;
+  color: var(--rf-ink);
+  font: inherit;
+  font-size: 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+input[type="password"]::placeholder {
+  color: #9aa3a2;
+}
+
+input[type="password"]:hover {
+  border-color: #c8d8d5;
+}
+
+input[type="password"]:focus-visible {
+  border-color: var(--rf-turquoise-deep);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--rf-focus);
+}
+
+button[type="submit"] {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 8px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--rf-orange), #ff661d);
+  box-shadow: 0 8px 18px rgb(240 68 11 / 22%);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--rf-orange-hover), #f45112);
+  box-shadow: 0 11px 22px rgb(240 68 11 / 28%);
+}
+
+button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+button[type="submit"]:focus-visible {
+  outline: 3px solid var(--rf-turquoise);
+  outline-offset: 3px;
+}
+
+button[type="submit"]:disabled {
+  cursor: wait;
+  opacity: .68;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 18px 14px;
+  }
+
+  main {
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

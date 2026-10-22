@@ -1,176 +1,226 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CONFRA ReisFit 2026 — Transparência 📊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Meta Tags Básicas -->
-    <meta name="description" content="Confirme sua presença na Confra ReisFit 2026 e cadastre seus acompanhantes.">
+    <title>CONFRA ReisFit 2026 — Transparência</title>
 
-    <!-- Configuração para o link em destaque com imagem no WhatsApp e Redes Sociais -->
+    <meta
+        name="description"
+        content="Consulte a arrecadação, as despesas e as notas fiscais da Confra ReisFit 2026."
+    >
+
     <meta property="og:site_name" content="ReisFit">
-    <meta property="og:title" content="🌴 CONFRA REISFIT 2026 — transparencia">
-    <meta property="og:description" content="Confira os gastos e arrecadações do evento de forma clara e detalhada.">
+    <meta property="og:title" content="CONFRA ReisFit 2026 — Transparência">
+    <meta
+        property="og:description"
+        content="Confira os gastos e a arrecadação do evento."
+    >
     <meta property="og:type" content="website">
-
-    <!-- Imagem de Prévia (Banner) -->
-    <meta property="og:image" content="https://mescola.github.io/confra-reisfit/assets/images/teste-banner.jpeg?v=2026">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://mescola.github.io/confra-reisfit/?v=2026">
+    <meta
+        property="og:image"
+        content="https://mescola.github.io/confra-reisfit/assets/images/teste-banner.jpeg?v=2026"
+    >
+    <meta
+        property="og:image:alt"
+        content="Confra ReisFit 2026"
+    >
+    <meta
+        property="og:url"
+        content="https://mescola.github.io/confra-reisfit/"
+    >
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap"
-        rel="stylesheet">
 
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap"
+        rel="stylesheet"
+    >
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/style.css">
+
+    <link rel="stylesheet" href="css/global.css?v=5">
+    <link rel="stylesheet" href="css/transparencia.css?v=6">
 </head>
+
 <body>
 
-    <header style="width: 100%; overflow: hidden; display: flex; justify-content: center; background-color: #0d1117; margin-bottom: 15px;">
-        <img src="assets/images/portal_banner2.png" alt="Banner Arraiá ReisFit"
-        style="width: 100%; height: auto; display: block; object-fit: cover;">
+    <header class="portal-header">
+        <img
+            src="assets/images/portal-banner2.png"
+            alt="Banner da Confra ReisFit 2026"
+        >
     </header>
 
-    <div class="container" style="max-width: 480px; margin: 0 auto; padding: 15px;">
+    <main class="container portal-container">
 
-        
-        <p style="color: #aaa; font-size: 13px; line-height: 1.5; text-align: center; margin-bottom: 25px; padding: 0 10px;">
-            Esta página foi criada para prestar contas de forma transparente aos participantes e parceiros do Arraiá ReisFit. Todas as despesas registradas possuem comprovantes anexados e podem ser consultadas abaixo.
+        <p class="portal-intro">
+            Esta página apresenta a prestação de contas da Confra ReisFit 2026.
+            Consulte os valores arrecadados, as despesas registradas e os
+            documentos disponibilizados para conferência.
         </p>
-        
-        <!-- 🎯 1. RESUMO GERAL (Subiu para o Topo!) -->
-        <div class="form-card" style="display: flex; flex-direction: column; gap: 8px; border: 1px solid #333; padding: 15px; margin-bottom: 25px; background: rgba(255,255,255,0.01);">
-            <h3 style="color: #fff; font-size: 13px; margin-top: 0; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; color: #888;">
-                📈 Resumo Geral
-            </h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-                <span style="color: #ccc;">Arrecadado:</span>
-                <strong id="transp-geral-arrecadado" style="color: #fff; font-size: 14px;">R$ 0,00</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-                <span style="color: #ccc;">Gastos:</span>
-                <strong id="transp-geral-gasto" style="color: #fff; font-size: 14px;">R$ 0,00</strong>
-            </div>
-            
-            <div style="height: 1px; background: #333; width: 100%; margin: 4px 0;"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold;">
-                <span style="color: #00BCD4;">SALDO:</span>
-                <strong id="transp-geral-saldo" style="color: #00BCD4; font-size: 15px;">R$ 0,00</strong>
-            </div>
-        </div>
 
-        <!-- 💰 2. RECURSOS RECEBIDOS -->
-        <div class="form-card" style="margin-bottom: 25px; padding: 15px; border: 1px solid #333;">
-            <h3 style="color: #00BCD4; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 6px;">
-                💰 Recursos Recebidos
-            </h3>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #ccc; margin-bottom: 6px;">
-                <span>👥 Participantes:</span>
-                <strong id="transp-alunos" style="color: #fff;">R$ 0,00</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #ccc; margin-bottom: 10px;">
-                <span>🤝 Parceiros:</span>
-                <strong id="transp-parceiros" style="color: #fff;">R$ 0,00</strong>
-            </div>
-            <div style="height: 1px; background: #333; margin-bottom: 10px;"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
-                <span style="color: #4CAF50;">💵 Total Arrecadado:</span>
-                <strong id="transp-arrecadacao" style="color: #4CAF50;">R$ 0,00</strong>
-            </div>
-        </div>
+        <!-- 1. Resumo geral -->
+        <section class="form-card portal-card portal-resumo-geral">
+            <h2 class="portal-section-title portal-title-muted">
+                Resumo Geral
+            </h2>
 
-        <!-- 📊 3. RESUMO DOS GASTOS POR CATEGORIA (Ordenado dinamicamente via JS) -->
-        <div class="form-card" style="margin-bottom: 25px; padding: 15px; border: 1px solid #333;">
-            <h3 style="color: #FF9800; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 6px;">
-                📊 Resumo dos Gastos
-            </h3>
-            
+            <div class="portal-total-row">
+                <span>Arrecadado:</span>
+                <strong id="transp-geral-arrecadado">R$ 0,00</strong>
+            </div>
+
+            <div class="portal-total-row">
+                <span>Gastos:</span>
+                <strong id="transp-geral-gasto">R$ 0,00</strong>
+            </div>
+
+            <div class="portal-divider"></div>
+
+            <div class="portal-total-row portal-total-final">
+                <span>Saldo:</span>
+                <strong id="transp-geral-saldo">R$ 0,00</strong>
+            </div>
+        </section>
+
+        <!-- 2. Recursos recebidos -->
+        <section class="form-card portal-card">
+            <h2 class="portal-section-title portal-title-turquoise">
+                Recursos Recebidos
+            </h2>
+
+            <div class="portal-total-row">
+                <span>Participantes:</span>
+                <strong id="transp-alunos">—</strong>
+            </div>
+
+            <div class="portal-total-row">
+                <span>Parceiros:</span>
+                <strong id="transp-parceiros">—</strong>
+            </div>
+
+            <div class="portal-divider"></div>
+
+            <div class="portal-total-row portal-total-arrecadacao">
+                <span>Total arrecadado:</span>
+                <strong id="transp-arrecadacao">R$ 0,00</strong>
+            </div>
+        </section>
+
+        <!-- 3. Resumo dos gastos por categoria -->
+        <section class="form-card portal-card">
+            <h2 class="portal-section-title portal-title-orange">
+                Resumo dos Gastos
+            </h2>
+
             <div id="transp-resumo-categorias">
-                <p style="color:#666; font-size:13px; font-style:italic;">Calculando categorias...</p>
+                <p class="portal-loading">
+                    Calculando categorias...
+                </p>
             </div>
-            
-            <div style="height: 1px; background: #333; margin: 12px 0 10px 0;"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
-                <span style="color: #F44336;">TOTAL GASTO:</span>
-                <strong id="transp-total-gasto" style="color: #F44336; font-family: monospace;">R$ 0,00</strong>
-            </div>
-        </div>
 
-        <!-- 📋 4. DETALHAMENTO COMPLETO (TABELA) -->
-        <div class="form-card" style="padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 25px;">
-            <h3 style="color: #fff; margin-top: 0; margin-bottom: 15px; font-size: 14px; border-bottom: 1px solid #222; padding-bottom: 8px;">
-                📋 Detalhamento de Gastos
-            </h3>
-            
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse:collapse; text-align:left;">
+            <div class="portal-divider"></div>
+
+            <div class="portal-total-row portal-total-gastos">
+                <span>Total gasto:</span>
+                <strong id="transp-total-gasto">R$ 0,00</strong>
+            </div>
+        </section>
+
+        <!-- 4. Detalhamento das despesas -->
+        <section class="form-card portal-card">
+            <h2 class="portal-section-title portal-title-light">
+                Detalhamento de Gastos
+            </h2>
+
+            <div class="portal-table-wrapper">
+                <table class="portal-table">
                     <thead>
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.1); color:#00BCD4; font-size:10px; text-transform:uppercase;">
-                            <th style="width:22%;padding:8px 2px;">Categoria</th>
-                            <th style="width:43%;padding:8px 2px;">Item</th>
-                            <th style="width:18%;padding:8px 2px;">Valor</th>
-                            <th style="width:17%;padding:8px 2px; text-align:center;">Nota</th>
+                        <tr>
+                            <th class="portal-table-th" scope="col">Categoria</th>
+                            <th class="portal-table-th" scope="col">Item</th>
+                            <th class="portal-table-th" scope="col">Valor</th>
+                            <th class="portal-table-th" scope="col">Nota</th>
                         </tr>
                     </thead>
+
                     <tbody id="tabela-transp-corpo">
-                        <!-- Injetado dinamicamente via JS -->
+                        <tr>
+                            <td colspan="4" class="portal-loading">
+                                Carregando despesas...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <!--  5. SALDO FINAL (Simplificado e Definitivo) -->
-        <div class="form-card" style="margin-bottom: 25px; padding: 15px; border: 1px solid #333; background: rgba(0, 188, 212, 0.01);">
-            <h3 style="color: #00BCD4; font-size: 14px; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 6px;">
+        <!-- 5. Saldo final -->
+        <section class="form-card portal-card portal-saldo-final">
+            <h2 class="portal-section-title portal-title-turquoise">
                 Saldo Final
-            </h3>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
-                <span id="label-saldo-texto" style="color: #aaa;">Saldo após todos os gastos registrados:</span>
-                <strong id="transp-saldo-final" style="color: #00BCD4; font-size: 14px;">R$ 0,00</strong>
+            </h2>
+
+            <div class="portal-total-row">
+                <span id="label-saldo-texto">
+                    Saldo após todos os gastos registrados:
+                </span>
+
+                <strong id="transp-saldo-final">R$ 0,00</strong>
             </div>
-            <p style="color: #888; font-size: 12px; margin: 5px 0 0 0; font-style: italic;">
-                Este valor representa o resultado financeiro final do evento.
+
+            <p class="portal-observation">
+                Este valor representa o resultado financeiro do evento,
+                considerando a arrecadação e as despesas registradas.
             </p>
-        </div>
+        </section>
 
-    </div>
+    </main>
 
-    <footer style="text-align: center; padding: 20px; color: #666; font-size: 12px; margin-bottom: 80px;">
-                🤝 Este evento só foi possível graças aos participantes, parceiros e voluntários que contribuíram com doações, brindes, tempo e dedicação. Nosso muito obrigado a todos que fizeram parte do Arraiá ReisFit 2026!
-
-        <p>Até o próximo evento!</p>
+    <footer class="portal-footer">
+        
+        <p class="portal-footer-highlight">
+            Até o próximo evento!
+        </p>
     </footer>
 
-    <!-- Scripts do Sistema -->
+    <!-- Scripts do sistema -->
     <script src="js/supabase.js?v=4"></script>
-    <script src="js/transparencia.js?v=4"></script>
+    <script src="js/transparencia.js?v=5"></script>
 
-    <!-- BARRA FLUTUANTE DE TESTE (Ajustada no fim do body para segurança) -->
+    <!-- Barra de teste -->
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('modo_desenvolvedor') === 'true') {
-                const barra = document.createElement('div');
-                barra.style = "position: fixed; top: 0; left: 0; width: 100%; background: #111; color: #fff; text-align: center; padding: 10px; font-size: 12px; z-index: 10000; border-bottom: 2px solid #00BCD4; display: flex; justify-content: center; align-items: center; gap: 10px; font-family: sans-serif;";
-                barra.innerHTML = `
-                    <span>🛠️ Modo de Teste Ativo</span>
-                    <button onclick="desativarTeste()" style="background: #F44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">Voltar p/ Inscrição</button>
-                `;
-                document.body.prepend(barra);
-                document.body.style.paddingTop = "40px";
+        window.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("modo_desenvolvedor") !== "true") {
+                return;
             }
+
+            const barra = document.createElement("div");
+            barra.className = "portal-test-bar";
+
+            const texto = document.createElement("span");
+            texto.textContent = "Modo de teste ativo";
+
+            const botao = document.createElement("button");
+            botao.type = "button";
+            botao.className = "portal-test-button";
+            botao.textContent = "Voltar para inscrição";
+            botao.addEventListener("click", desativarTeste);
+
+            barra.append(texto, botao);
+            document.body.prepend(barra);
+            document.body.classList.add("portal-test-active");
         });
 
         function desativarTeste() {
-            localStorage.setItem('modo_desenvolvedor', 'false');
+            localStorage.setItem("modo_desenvolvedor", "false");
             window.location.href = "index.html?teste=0";
         }
     </script>
+
 </body>
 </html>

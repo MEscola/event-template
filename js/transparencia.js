@@ -1,4 +1,3 @@
-
 /* js/transparencia.js */
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -20,19 +19,9 @@ const escaparHTML = (valor) =>
         "'": "&#39;"
     })[caractere]);
 
-function formatarData(data) {
-    if (!data) return "—";
-
-    const dataObj = new Date(data);
-
-    if (Number.isNaN(dataObj.getTime())) return "—";
-
-    return dataObj.toLocaleDateString("pt-BR");
-}
-
-function obterLinkComprovante(url) {
+function obterLinkDocumento(url, texto = "Ver nota") {
     if (!url) {
-        return '<span style="color:#888;font-style:italic;font-size:12px;">Não anexado</span>';
+        return '<span style="color:#888;font-size:12px;">Não anexada</span>';
     }
 
     try {
@@ -47,12 +36,18 @@ function obterLinkComprovante(url) {
                 href="${escaparHTML(endereco.href)}"
                 target="_blank"
                 rel="noopener noreferrer"
-                style="color:#2ec4b6;font-weight:bold;text-decoration:none;
-                       padding:4px 10px;border-radius:6px;font-size:12px;
-                       border:1px solid rgba(46,196,182,0.3);"
-            >
-                Ver comprovante
-            </a>
+                style="
+                    display:inline-block;
+                    color:#2ec4b6;
+                    font-weight:bold;
+                    text-decoration:none;
+                    padding:5px 8px;
+                    border-radius:6px;
+                    font-size:12px;
+                    border:1px solid rgba(46,196,182,0.3);
+                    white-space:nowrap;
+                "
+            >${texto}</a>
         `;
     } catch {
         return '<span style="color:#888;font-size:12px;">Link indisponível</span>';
@@ -80,8 +75,7 @@ async function carregarPortalTransparencia() {
         return;
     }
 
-    // 1. BUSCAR A ARRECADAÇÃO PELA FUNÇÃO RPC
-    // A função retorna somente o total das inscrições ativas e pagas.
+    // 1. Buscar a arrecadação
     let arrecadacaoTotal = 0;
 
     const { data: totalRecebido, error: erroArrecadacao } =
@@ -90,21 +84,16 @@ async function carregarPortalTransparencia() {
     if (erroArrecadacao) {
         console.error("Erro ao carregar arrecadação:", erroArrecadacao);
 
-        if (txtGeralArrecadado) {
-            txtGeralArrecadado.innerText = "Indisponível";
-        }
-
-        if (txtArrecadacao) {
-            txtArrecadacao.innerText = "Indisponível";
-        }
+        if (txtGeralArrecadado) txtGeralArrecadado.innerText = "Indisponível";
+        if (txtArrecadacao) txtArrecadacao.innerText = "Indisponível";
     } else {
         arrecadacaoTotal = Number(totalRecebido) || 0;
     }
 
-    // 2. BUSCAR AS DESPESAS DA CONFRA
+    // 2. Buscar todas as informações das despesas, incluindo a nota fiscal
     const { data: despesas, error: erroDespesas } = await _supabase
         .from("despesas")
-        .select("id, descricao, valor, categoria, url_comprovante, created_at")
+        .select("id, descricao, valor, categoria, url_comprovante, url_nota_fiscal, created_at")
         .order("created_at", { ascending: false });
 
     if (erroDespesas) {
@@ -112,7 +101,7 @@ async function carregarPortalTransparencia() {
 
         tabelaCorpo.innerHTML = `
             <tr>
-                <td colspan="5" style="padding:30px;text-align:center;color:#F44336;">
+                <td colspan="4" style="padding:30px;text-align:center;color:#F44336;">
                     Não foi possível carregar as despesas.
                 </td>
             </tr>
@@ -126,7 +115,6 @@ async function carregarPortalTransparencia() {
             `;
         }
 
-        // Não exibir um saldo aparentemente correto sem conhecer as despesas.
         if (txtGeralGasto) txtGeralGasto.innerText = "Indisponível";
         if (txtGeralSaldo) txtGeralSaldo.innerText = "Indisponível";
         if (txtTotalGasto) txtTotalGasto.innerText = "Indisponível";
@@ -139,7 +127,7 @@ async function carregarPortalTransparencia() {
         return;
     }
 
-    // 3. CALCULAR O TOTAL GASTO E AGRUPAR POR CATEGORIA
+    // 3. Calcular gastos e agrupar por categoria
     let custosTotal = 0;
     const resumoCategorias = {};
 
@@ -155,7 +143,8 @@ async function carregarPortalTransparencia() {
         "Infraestrutura": "🎪",
         "Alimentação": "🍖",
         "Carvão": "🔥",
-        "Aluguel": "🏠"
+        "Aluguel": "🏠",
+        "Espaço e logística": "🏠"
     };
 
     if (despesas && despesas.length > 0) {
@@ -169,36 +158,33 @@ async function carregarPortalTransparencia() {
             resumoCategorias[categoria] =
                 (resumoCategorias[categoria] || 0) + valorGasto;
 
-            const comprovante = obterLinkComprovante(
-                despesa.url_comprovante
-            );
+            // Priorizar a nota fiscal; se não houver, mostrar o comprovante.
+            const documento = despesa.url_nota_fiscal
+                ? obterLinkDocumento(despesa.url_nota_fiscal, "Ver nota")
+                : obterLinkDocumento(despesa.url_comprovante, "Ver comprovante");
 
             tabelaCorpo.innerHTML += `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
-                    <td style="padding:10px 6px;color:#aaa;">
+                    <td style="padding:10px 6px;color:#aaa;vertical-align:top;">
                         ${escaparHTML(categoria)}
                     </td>
 
-                    <td style="padding:10px 6px;color:#fff;">
+                    <td style="padding:10px 6px;color:#fff;vertical-align:top;overflow-wrap:anywhere;">
                         ${escaparHTML(descricao)}
                     </td>
 
-                    <td style="padding:10px 6px;color:#fff;font-weight:bold;white-space:nowrap;">
+                    <td style="padding:10px 6px;color:#fff;font-weight:bold;white-space:nowrap;vertical-align:top;">
                         ${formatarMoeda(valorGasto)}
                     </td>
 
-                    <td style="padding:10px 6px;color:#aaa;white-space:nowrap;">
-                        ${formatarData(despesa.created_at)}
-                    </td>
-
-                    <td style="padding:10px 6px;text-align:center;">
-                        ${comprovante}
+                    <td style="padding:10px 6px;text-align:center;vertical-align:top;">
+                        ${documento}
                     </td>
                 </tr>
             `;
         });
 
-        // 4. RESUMO POR CATEGORIA, DO MAIOR PARA O MENOR GASTO
+        // 4. Resumo por categoria, do maior para o menor gasto
         if (blocoCategorias) {
             blocoCategorias.innerHTML = "";
 
@@ -208,12 +194,16 @@ async function carregarPortalTransparencia() {
                     const emoji = emojis[categoria] || "📋";
 
                     blocoCategorias.innerHTML += `
-                        <div style="display:flex;justify-content:space-between;
-                                    align-items:center;gap:12px;font-size:14px;
-                                    color:#ddd;margin-bottom:8px;">
-                            <span>
-                                ${emoji} ${escaparHTML(categoria)}
-                            </span>
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:center;
+                            gap:12px;
+                            font-size:14px;
+                            color:#ddd;
+                            margin-bottom:8px;
+                        ">
+                            <span>${emoji} ${escaparHTML(categoria)}</span>
 
                             <span style="font-family:monospace;color:#fff;white-space:nowrap;">
                                 ${formatarMoeda(valor)}
@@ -225,7 +215,7 @@ async function carregarPortalTransparencia() {
     } else {
         tabelaCorpo.innerHTML = `
             <tr>
-                <td colspan="5" style="padding:30px;text-align:center;color:#888;">
+                <td colspan="4" style="padding:30px;text-align:center;color:#888;">
                     Nenhuma despesa registrada.
                 </td>
             </tr>
@@ -240,10 +230,10 @@ async function carregarPortalTransparencia() {
         }
     }
 
-    // 5. CALCULAR O SALDO
+    // 5. Calcular o saldo
     const saldoFinal = arrecadacaoTotal - custosTotal;
 
-    // 6. ATUALIZAR OS VALORES DO RESUMO GERAL
+    // 6. Atualizar os valores
     if (!erroArrecadacao) {
         if (txtGeralArrecadado) {
             txtGeralArrecadado.innerText = formatarMoeda(arrecadacaoTotal);
@@ -284,19 +274,15 @@ async function carregarPortalTransparencia() {
 
     if (lblTextoSaldo) {
         if (erroArrecadacao) {
-            lblTextoSaldo.innerText =
-                "Não foi possível calcular o saldo:";
+            lblTextoSaldo.innerText = "Não foi possível calcular o saldo:";
         } else if (saldoFinal < 0) {
-            lblTextoSaldo.innerText =
-                "Déficit após todos os gastos registrados:";
+            lblTextoSaldo.innerText = "Déficit após todos os gastos registrados:";
         } else {
-            lblTextoSaldo.innerText =
-                "Saldo após todos os gastos registrados:";
+            lblTextoSaldo.innerText = "Saldo após todos os gastos registrados:";
         }
     }
 
-    // Esses dois campos eram específicos do portal antigo do Arraiá.
-    // A Confra não possui, neste código, uma separação entre alunos e parceiros.
+    // A Confra não separa a arrecadação entre participantes e parceiros.
     if (txtAlunos) txtAlunos.innerText = "—";
     if (txtParceiros) txtParceiros.innerText = "—";
 }

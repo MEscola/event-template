@@ -1,0 +1,472 @@
+
+/* =========================================
+   CONFRA REISFIT 2026 — PORTAL TRANSPARÊNCIA
+   ========================================= */
+
+:root {
+    color-scheme: dark;
+
+    --rf-bg: #101419;
+    --rf-surface: #191f25;
+    --rf-border: #303b43;
+
+    --rf-text: #f3f5f4;
+    --rf-muted: #a8b2b6;
+
+    --rf-orange: #ff6b1a;
+    --rf-turquoise: #20c7c1;
+    --rf-green: #61cf87;
+    --rf-red: #ff6b62;
+}
+
+/* Estrutura geral */
+
+html {
+    min-height: 100%;
+    background: var(--rf-bg);
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    background:
+        radial-gradient(
+            ellipse at 50% 0%,
+            #20282c 0%,
+            var(--rf-bg) 48rem
+        ) !important;
+
+    color: var(--rf-text);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Banner */
+
+body > .portal-header {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 22px;
+    overflow: hidden;
+
+    background: #11171b;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+}
+
+.portal-header img {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+}
+
+/* Conteúdo principal */
+
+.portal-container {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 520px !important;
+    margin: 0 auto;
+    padding: 18px 16px 10px !important;
+}
+
+.portal-intro {
+    margin: 0 0 25px;
+    padding: 0 10px;
+
+    color: var(--rf-muted) !important;
+    font-size: 14px;
+    line-height: 1.65;
+    text-align: center;
+}
+
+/* Cards */
+
+.portal-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin: 0 0 25px;
+    padding: 15px;
+
+    border: 1px solid var(--rf-border) !important;
+    border-radius: 16px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgb(34 42 48 / 96%),
+            rgb(24 30 35 / 98%)
+        ) !important;
+
+    box-shadow: 0 12px 28px rgb(0 0 0 / 20%);
+    color: var(--rf-text);
+}
+
+.portal-card:hover {
+    border-color: #46545c !important;
+}
+
+/* Títulos */
+
+.portal-section-title {
+    margin: 0 0 8px;
+    padding-bottom: 10px;
+
+    border-bottom: 1px solid #354149;
+
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.portal-title-muted {
+    color: var(--rf-muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.portal-title-turquoise {
+    color: var(--rf-turquoise);
+}
+
+.portal-title-orange {
+    color: var(--rf-orange);
+}
+
+.portal-title-light {
+    color: var(--rf-text);
+}
+
+/* Linhas de totais */
+
+.portal-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 13px;
+}
+
+.portal-total-row > span {
+    color: #c2cbcd;
+}
+
+.portal-total-row > strong {
+    color: #f7f8f6;
+    font-size: 14px;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.portal-total-final {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.portal-total-final > span,
+.portal-total-final > strong {
+    color: var(--rf-turquoise);
+}
+
+.portal-total-arrecadacao > span,
+.portal-total-arrecadacao > strong {
+    color: var(--rf-green);
+}
+
+.portal-total-gastos > span,
+.portal-total-gastos > strong {
+    color: var(--rf-red);
+}
+
+.portal-divider {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
+
+    background: #354149;
+}
+
+.portal-loading {
+    margin: 5px 0;
+    color: var(--rf-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Resumo por categoria */
+
+#transp-resumo-categorias {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#transp-resumo-categorias > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 14px;
+}
+
+#transp-resumo-categorias > div > span:last-child {
+    flex-shrink: 0;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+/* Tabela de despesas */
+
+.portal-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.portal-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    color: #e8eeee;
+    text-align: left;
+}
+
+.portal-table th {
+    padding: 10px 5px;
+
+    border-bottom: 1px solid #3b484f;
+
+    color: var(--rf-turquoise);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: bottom;
+}
+
+.portal-table th:nth-child(1) {
+    width: 22%;
+}
+
+.portal-table th:nth-child(2) {
+    width: 38%;
+}
+
+.portal-table th:nth-child(3) {
+    width: 20%;
+}
+
+.portal-table th:nth-child(4) {
+    width: 20%;
+    text-align: center;
+}
+
+.portal-table th {
+    text-align: center;
+    background: #191f25;
+    border-color: #20c7c1;
+}
+
+.portal-table td {
+    padding: 10px 5px;
+
+    border-bottom: 1px solid #2d373d;
+
+    color: #e8eeee;
+    font-size: 12px;
+    line-height: 1.5;
+    vertical-align: top;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.portal-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.portal-table tbody tr:hover {
+    background: rgb(32 199 193 / 5%);
+}
+
+.portal-table td:nth-child(1) {
+    color: var(--rf-muted);
+}
+
+.portal-table td:nth-child(2) {
+    color: var(--rf-text);
+}
+
+.portal-table td:nth-child(3) {
+    color: var(--rf-text);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.portal-table td:nth-child(4) {
+    text-align: center;
+}
+
+/* Links para documentos */
+
+.portal-table a {
+    display: inline-block;
+
+    max-width: 100%;
+    box-sizing: border-box;
+
+    padding: 5px 6px;
+    border: 1px solid rgb(32 199 193 / 30%);
+    border-radius: 6px;
+
+    color: var(--rf-turquoise);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.portal-table a:hover {
+    color: #73efdf;
+    background: rgb(32 199 193 / 8%);
+}
+
+.portal-table td[colspan] {
+    text-align: center;
+}
+
+/* Saldo final */
+
+.portal-saldo-final {
+    background:
+        linear-gradient(
+            145deg,
+            rgb(32 199 193 / 5%),
+            rgb(24 30 35 / 98%)
+        ) !important;
+}
+
+.portal-observation {
+    margin: 5px 0 0;
+    color: var(--rf-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* Rodapé */
+
+body > .portal-footer {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 520px;
+
+    margin: 0 auto 80px !important;
+    padding: 24px 20px !important;
+
+    color: #89959a;
+    font-size: 12px;
+    line-height: 1.7;
+    text-align: center;
+}
+
+.portal-footer p {
+    margin: 0;
+}
+
+.portal-footer .portal-footer-highlight {
+    margin-top: 14px;
+    color: var(--rf-orange);
+    font-weight: 700;
+}
+
+/* Barra de teste */
+
+.portal-test-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+
+    border-bottom: 2px solid var(--rf-turquoise);
+    background: #171e23;
+    color: var(--rf-text);
+
+    font-family: sans-serif;
+    font-size: 12px;
+    text-align: center;
+}
+
+.portal-test-button {
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 5px;
+
+    background: var(--rf-orange);
+    color: #fff;
+
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+body.portal-test-active {
+    padding-top: 42px;
+}
+
+/* Responsividade */
+
+@media (max-width: 380px) {
+    .portal-container {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
+    .portal-card {
+        padding: 13px;
+    }
+
+    .portal-table th,
+    .portal-table td {
+        padding-right: 3px;
+        padding-left: 3px;
+        font-size: 11px;
+    }
+
+    .portal-table th {
+        font-size: 9px;
+        letter-spacing: 0;
+    }
+
+    .portal-table a {
+        padding: 4px;
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
