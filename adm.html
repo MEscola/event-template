@@ -1,6 +1,7 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +11,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="css/global.css">
   <link rel="stylesheet" href="css/adm.css">
-
-  
 </head>
 
 <body>
@@ -23,12 +22,7 @@
     <h1>Administração da Confra</h1>
     <p class="muted">Área restrita à equipe responsável pelo evento.</p>
 
-    <div
-      id="mensagem-admin"
-      role="status"
-      aria-live="polite"
-      style="display:none">
-    </div>
+    <div id="mensagem-admin" role="status" aria-live="polite" style="display:none"></div>
 
     <!-- Login -->
     <section id="tela-login" class="admin-card">
@@ -37,26 +31,15 @@
       <form id="form-login">
         <div class="admin-field">
           <label for="login-email">E-mail cadastrado no Supabase</label>
-          <input
-            id="login-email"
-            type="email"
-            autocomplete="username"
-            required>
+          <input id="login-email" type="email" autocomplete="username" required>
         </div>
 
         <div class="admin-field">
           <label for="login-senha">Senha</label>
-          <input
-            id="login-senha"
-            type="password"
-            autocomplete="current-password"
-            required>
+          <input id="login-senha" type="password" autocomplete="current-password" required>
         </div>
 
-        <button
-          class="admin-btn btn-primary"
-          type="submit"
-          id="btn-login">
+        <button class="admin-btn btn-primary" type="submit" id="btn-login">
           Entrar
         </button>
       </form>
@@ -66,10 +49,7 @@
     <section id="painel-admin">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <p id="admin-identificado" class="muted"></p>
-        <button
-          type="button"
-          id="btn-sair"
-          class="admin-btn btn-neutral">
+        <button type="button" id="btn-sair" class="admin-btn btn-neutral">
           Sair
         </button>
       </div>
@@ -99,25 +79,17 @@
 
       <!-- Abas -->
       <div class="admin-tabs" role="tablist">
-        <button
-          type="button"
-          class="active"
-          data-aba="secao-participantes">
+        <button type="button" class="active" data-aba="secao-participantes">
           Participantes
         </button>
 
-        <button
-          type="button"
-          data-aba="secao-despesas">
+        <button type="button" data-aba="secao-despesas">
           Despesas
         </button>
       </div>
 
       <!-- Participantes -->
-      <section
-        id="secao-participantes"
-        class="admin-section active admin-card">
-
+      <section id="secao-participantes" class="admin-section active admin-card">
         <div class="cabecalho-inscricoes">
           <h2>Inscrições</h2>
 
@@ -128,7 +100,8 @@
             aria-label="Localizar cadastro"
             aria-expanded="false"
             aria-controls="painel-busca-inscricoes"
-            title="Localizar cadastro">
+            title="Localizar cadastro"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="21"
@@ -139,7 +112,8 @@
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              aria-hidden="true">
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7"></circle>
               <path d="m20 20-4-4"></path>
             </svg>
@@ -152,12 +126,8 @@
           ser reativadas.
         </p>
 
-        <!-- Busca oculta inicialmente -->
-        <div
-          id="painel-busca-inscricoes"
-          class="busca-inscricoes"
-          hidden>
-
+        <!-- Busca -->
+        <div id="painel-busca-inscricoes" class="busca-inscricoes" hidden>
           <label for="buscar-inscricao" class="sr-only">
             Nome do titular ou acompanhante
           </label>
@@ -167,29 +137,25 @@
             type="search"
             placeholder="Digite o nome do titular ou acompanhante..."
             autocomplete="off"
-            aria-describedby="contador-inscricoes">
+            aria-describedby="contador-inscricoes"
+          >
 
           <button
             type="button"
             id="btn-limpar-busca"
             class="btn-limpar-busca"
             aria-label="Limpar pesquisa"
-            title="Limpar pesquisa">
+            title="Limpar pesquisa"
+          >
             &times;
           </button>
 
-          <p
-            id="contador-inscricoes"
-            class="muted"
-            aria-live="polite">
+          <p id="contador-inscricoes" class="muted" aria-live="polite">
             Carregando cadastros...
           </p>
         </div>
 
-        <button
-          type="button"
-          class="admin-btn btn-primary"
-          id="btn-atualizar-inscricoes">
+        <button type="button" class="admin-btn btn-primary" id="btn-atualizar-inscricoes">
           Atualizar lista
         </button>
 
@@ -217,10 +183,7 @@
       </section>
 
       <!-- Despesas -->
-      <section
-        id="secao-despesas"
-        class="admin-section admin-card">
-
+      <section id="secao-despesas" class="admin-section admin-card">
         <h2>Registrar despesa</h2>
 
         <form id="form-despesa">
@@ -230,7 +193,8 @@
               id="despesa-descricao"
               maxlength="200"
               required
-              placeholder="Ex.: Carnes e carvão">
+              placeholder="Ex.: Carnes e carvão"
+            >
           </div>
 
           <div class="admin-field">
@@ -241,7 +205,8 @@
               min="0.01"
               step="0.01"
               required
-              placeholder="0,00">
+              placeholder="0,00"
+            >
           </div>
 
           <div class="admin-field">
@@ -256,22 +221,30 @@
           </div>
 
           <div class="admin-field">
-            <label for="despesa-comprovante">
-              Link do comprovante (opcional)
-            </label>
+            <label for="despesa-comprovante">Link do comprovante (opcional)</label>
             <input
               id="despesa-comprovante"
               type="url"
-              placeholder="https://...">
+              placeholder="https://..."
+            >
+          </div>
+
+          <!-- Nota fiscal -->
+          <div class="admin-field">
+            <label for="despesa-nota-fiscal">Nota fiscal (opcional)</label>
+            <input
+              id="despesa-nota-fiscal"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+            >
+
             <small class="muted">
-              Informe um link acessível ao público.
+              Anexe a nota fiscal em PDF ou imagem. Confira se o documento
+              pode ser divulgado publicamente antes de enviá-lo.
             </small>
           </div>
 
-          <button
-            type="submit"
-            id="btn-salvar-despesa"
-            class="admin-btn btn-primary">
+          <button type="submit" id="btn-salvar-despesa" class="admin-btn btn-primary">
             Salvar despesa
           </button>
         </form>
@@ -285,7 +258,7 @@
                 <th>Descrição</th>
                 <th>Categoria</th>
                 <th>Valor</th>
-                <th>Comprovante</th>
+                <th>Comprovante / Nota fiscal</th>
                 <th>Ação</th>
               </tr>
             </thead>
@@ -315,16 +288,10 @@
 
       <div class="admin-field">
         <label for="edicao-titular">Nome do titular</label>
-        <input
-          id="edicao-titular"
-          maxlength="150"
-          required>
+        <input id="edicao-titular" maxlength="150" required>
       </div>
 
-      <div
-        id="aviso-pagamento-edicao"
-        class="aviso-edicao"
-        style="display:none">
+      <div id="aviso-pagamento-edicao" class="aviso-edicao" style="display:none">
         Esta inscrição está marcada como paga. Se a alteração mudar
         o valor previsto, confira a diferença recebida. O sistema não
         mudará automaticamente o status do pagamento.
@@ -334,10 +301,7 @@
 
       <div id="lista-acompanhantes-edicao"></div>
 
-      <button
-        type="button"
-        id="btn-adicionar-acompanhante"
-        class="admin-btn btn-neutral">
+      <button type="button" id="btn-adicionar-acompanhante" class="admin-btn btn-neutral">
         + Adicionar acompanhante
       </button>
 
@@ -347,17 +311,11 @@
       </p>
 
       <div class="modal-acoes">
-        <button
-          type="submit"
-          id="btn-salvar-edicao"
-          class="admin-btn btn-primary">
+        <button type="submit" id="btn-salvar-edicao" class="admin-btn btn-primary">
           Salvar alterações
         </button>
 
-        <button
-          type="button"
-          id="btn-cancelar-edicao"
-          class="admin-btn btn-neutral">
+        <button type="button" id="btn-cancelar-edicao" class="admin-btn btn-neutral">
           Fechar
         </button>
       </div>
@@ -377,10 +335,7 @@
         <span>Quem vai?</span>
       </a>
 
-      <a
-        href="adm.html"
-        class="nav-item active"
-        aria-current="page">
+      <a href="adm.html" class="nav-item active" aria-current="page">
         <span class="nav-icon">🔑</span>
         <span>ADM</span>
       </a>
@@ -390,4 +345,5 @@
   <script src="js/supabase.js?v=6"></script>
   <script src="js/adm.js?v=7"></script>
 </body>
+
 </html>

@@ -1,179 +1,302 @@
-// js/transparencia.js
 
-window.addEventListener('DOMContentLoaded', () => {
+/* js/transparencia.js */
+
+window.addEventListener("DOMContentLoaded", () => {
     carregarPortalTransparencia();
 });
 
+const formatarMoeda = (valor) =>
+    Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+
+const escaparHTML = (valor) =>
+    String(valor ?? "").replace(/[&<>"']/g, (caractere) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[caractere]);
+
+function formatarData(data) {
+    if (!data) return "—";
+
+    const dataObj = new Date(data);
+
+    if (Number.isNaN(dataObj.getTime())) return "—";
+
+    return dataObj.toLocaleDateString("pt-BR");
+}
+
+function obterLinkComprovante(url) {
+    if (!url) {
+        return '<span style="color:#888;font-style:italic;font-size:12px;">Não anexado</span>';
+    }
+
+    try {
+        const endereco = new URL(url);
+
+        if (!["https:", "http:"].includes(endereco.protocol)) {
+            return '<span style="color:#888;font-size:12px;">Link indisponível</span>';
+        }
+
+        return `
+            <a
+                href="${escaparHTML(endereco.href)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="color:#2ec4b6;font-weight:bold;text-decoration:none;
+                       padding:4px 10px;border-radius:6px;font-size:12px;
+                       border:1px solid rgba(46,196,182,0.3);"
+            >
+                Ver comprovante
+            </a>
+        `;
+    } catch {
+        return '<span style="color:#888;font-size:12px;">Link indisponível</span>';
+    }
+}
+
 async function carregarPortalTransparencia() {
-    // Pegando os elementos da tela
-    const txtGeralArrecadado = document.getElementById('transp-geral-arrecadado');
-    const txtGeralGasto = document.getElementById('transp-geral-gasto');
-    const txtGeralSaldo = document.getElementById('transp-geral-saldo');
+    const txtGeralArrecadado = document.getElementById("transp-geral-arrecadado");
+    const txtGeralGasto = document.getElementById("transp-geral-gasto");
+    const txtGeralSaldo = document.getElementById("transp-geral-saldo");
 
-    const txtAlunos = document.getElementById('transp-alunos');
-    const txtParceiros = document.getElementById('transp-parceiros');
-    const txtArrecadacao = document.getElementById('transp-arrecadacao');
-    
-    const blocoCategorias = document.getElementById('transp-resumo-categorias');
-    const tabelaCorpo = document.getElementById('tabela-transp-corpo');
-    
-    const txtTotalGasto = document.getElementById('transp-total-gasto');
-    const txtSaldoFinal = document.getElementById('transp-saldo-final');
+    const txtAlunos = document.getElementById("transp-alunos");
+    const txtParceiros = document.getElementById("transp-parceiros");
+    const txtArrecadacao = document.getElementById("transp-arrecadacao");
 
-    if (!tabelaCorpo) return;
+    const blocoCategorias = document.getElementById("transp-resumo-categorias");
+    const tabelaCorpo = document.getElementById("tabela-transp-corpo");
 
-    // 1. BUSCAR ENTRADAS (Inscritos)
-    const { data: inscritos, error: erroInscritos } = await _supabase
-        .from('cadastro_arraia')
-        .select('qtd_conjuge, qtd_amigos, status_pix, total_pix');
+    const txtTotalGasto = document.getElementById("transp-total-gasto");
+    const txtSaldoFinal = document.getElementById("transp-saldo-final");
+    const lblTextoSaldo = document.getElementById("label-saldo-texto");
 
-    // 2. BUSCAR SAÍDAS (Gastos)
-    const { data: gastos, error: erroGastos } = await _supabase
-        .from('gastos_arraia')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (erroInscritos || erroGastos) {
-        console.error("Erro Supabase:", erroInscritos || erroGastos);
+    if (!tabelaCorpo) {
+        console.error("Não foi encontrado o elemento #tabela-transp-corpo.");
         return;
     }
 
-    // --- PROCESSAR RECURSOS RECEBIDOS ---
-    let faturamentoPublicoAlunos = 0;       // Gaveta dos Alunos comuns
-    let faturamentoPatrocinios = 0;         // Gaveta dos Parceiros (Doações/PIX Puro)
-    let faturamentoInscricoesParceiros = 0; // Inscrições de acompanhantes vindas de parceiros
+    // 1. BUSCAR A ARRECADAÇÃO PELA FUNÇÃO RPC
+    // A função retorna somente o total das inscrições ativas e pagas.
+    let arrecadacaoTotal = 0;
 
-    if (inscritos) {
-        inscritos.forEach(item => {
-            const statusAtual = item.status_pix || "Pendente";
-            
-            const ehParceiro = statusAtual.includes("Box Friendly") || statusAtual.includes("Parceria") || statusAtual.includes("Parceiro");
-            const ehParceiro100 = statusAtual.includes("Isenção Total") || statusAtual.includes("100");
-            const ehParceiro50 = statusAtual.includes("Isenção Titular") || statusAtual.includes("50");
+    const { data: totalRecebido, error: erroArrecadacao } =
+        await _supabase.rpc("portal_total_arrecadado");
 
-            const estaValidado = statusAtual === "Confirmado" || statusAtual === "Pago" || statusAtual === "Parceria Confirmada" || statusAtual.includes("Pago");
+    if (erroArrecadacao) {
+        console.error("Erro ao carregar arrecadação:", erroArrecadacao);
 
-            if (estaValidado) {
-                const conjuge = Number(item.qtd_conjuge) || 0;
-                const amigos = Number(item.qtd_amigos) || 0;
-                
-                let valorInscricaoCalculada = 0;
-                if (ehParceiro) {
-                    if (ehParceiro100) {
-                        valorInscricaoCalculada = 0;
-                    } else if (ehParceiro50) {
-                        // Isenção Titular: ignora os 15 do titular e soma cônjuge e amigos
-                        valorInscricaoCalculada = (conjuge * 15) + (amigos * 20);
-                    } else {
-                        valorInscricaoCalculada = (conjuge * 15) + (amigos * 20);
-                    }
-                } else {
-                    valorInscricaoCalculada = 15 + (conjuge * 15) + (amigos * 20);
-                }
+        if (txtGeralArrecadado) {
+            txtGeralArrecadado.innerText = "Indisponível";
+        }
 
-                if (ehParceiro) {
-                    faturamentoInscricoesParceiros += valorInscricaoCalculada;
-                    const valorDoacaoPura = Number(item.total_pix) || 0;
-                    faturamentoPatrocinios += valorDoacaoPura;
-                } else {
-                    faturamentoPublicoAlunos += valorInscricaoCalculada;
-                }
-            }
-        });
+        if (txtArrecadacao) {
+            txtArrecadacao.innerText = "Indisponível";
+        }
+    } else {
+        arrecadacaoTotal = Number(totalRecebido) || 0;
     }
 
-    // A arrecadação total é a soma de tudo o que entrou de fato no evento
-    const arrecadacaoTotal = faturamentoPublicoAlunos + faturamentoInscricoesParceiros + faturamentoPatrocinios;
+    // 2. BUSCAR AS DESPESAS DA CONFRA
+    const { data: despesas, error: erroDespesas } = await _supabase
+        .from("despesas")
+        .select("id, descricao, valor, categoria, url_comprovante, created_at")
+        .order("created_at", { ascending: false });
 
-    // --- PROCESSAR SAÍDAS E CATEGORIAS ---
+    if (erroDespesas) {
+        console.error("Erro ao carregar despesas:", erroDespesas);
+
+        tabelaCorpo.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding:30px;text-align:center;color:#F44336;">
+                    Não foi possível carregar as despesas.
+                </td>
+            </tr>
+        `;
+
+        if (blocoCategorias) {
+            blocoCategorias.innerHTML = `
+                <p style="color:#888;font-size:13px;">
+                    Não foi possível carregar o resumo das despesas.
+                </p>
+            `;
+        }
+
+        // Não exibir um saldo aparentemente correto sem conhecer as despesas.
+        if (txtGeralGasto) txtGeralGasto.innerText = "Indisponível";
+        if (txtGeralSaldo) txtGeralSaldo.innerText = "Indisponível";
+        if (txtTotalGasto) txtTotalGasto.innerText = "Indisponível";
+        if (txtSaldoFinal) txtSaldoFinal.innerText = "Indisponível";
+
+        if (lblTextoSaldo) {
+            lblTextoSaldo.innerText = "Não foi possível calcular o saldo:";
+        }
+
+        return;
+    }
+
+    // 3. CALCULAR O TOTAL GASTO E AGRUPAR POR CATEGORIA
     let custosTotal = 0;
     const resumoCategorias = {};
 
-    tabelaCorpo.innerHTML = '';
+    tabelaCorpo.innerHTML = "";
 
-    if (gastos && gastos.length > 0) {
-        gastos.forEach(gasto => {
-            const valorGasto = Number(gasto.valor) || 0;
+    const emojis = {
+        "Descartáveis": "📦",
+        "Bebidas": "🥤",
+        "Brindes/Bingo": "🎁",
+        "Decoração": "🎨",
+        "Outros": "📋",
+        "Logística": "🚚",
+        "Infraestrutura": "🎪",
+        "Alimentação": "🍖",
+        "Carvão": "🔥",
+        "Aluguel": "🏠"
+    };
+
+    if (despesas && despesas.length > 0) {
+        despesas.forEach((despesa) => {
+            const valorGasto = Number(despesa.valor) || 0;
+            const categoria = despesa.categoria || "Outros";
+            const descricao = despesa.descricao || "Sem descrição";
+
             custosTotal += valorGasto;
 
-            const cat = gasto.categoria || "Outros";
-            resumoCategorias[cat] = (resumoCategorias[cat] || 0) + valorGasto;
+            resumoCategorias[categoria] =
+                (resumoCategorias[categoria] || 0) + valorGasto;
 
-            let botaoNotaHTML = gasto.url_nota 
-                ? `<a href="${gasto.url_nota}" target="_blank" style="color:#00BCD4; font-weight:bold; text-decoration:none; background:rgba(0,188,212,0.08); padding:4px 10px; border-radius:6px; font-size:12px; border: 1px solid rgba(0,188,212,0.2);">Ver</a>` 
-                : `<span style="color:#555; font-style:italic; font-size:12px;">Não anexada</span>`;
+            const comprovante = obterLinkComprovante(
+                despesa.url_comprovante
+            );
 
             tabelaCorpo.innerHTML += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px;">
-                    <td style="padding: 8px 2px; color:#aaa;">${gasto.categoria}</td>
-                    <td style="padding: 8px 2px; color:#fff; font-weight: 500;">${gasto.descricao}</td>
-                    <td style="padding: 8px 2px; color:#fff; font-weight:bold; white-space:nowrap;">R$ ${valorGasto.toFixed(2)}</td>
-                    <td style="padding: 8px 2px; text-align:center;">${botaoNotaHTML}</td>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+                    <td style="padding:10px 6px;color:#aaa;">
+                        ${escaparHTML(categoria)}
+                    </td>
+
+                    <td style="padding:10px 6px;color:#fff;">
+                        ${escaparHTML(descricao)}
+                    </td>
+
+                    <td style="padding:10px 6px;color:#fff;font-weight:bold;white-space:nowrap;">
+                        ${formatarMoeda(valorGasto)}
+                    </td>
+
+                    <td style="padding:10px 6px;color:#aaa;white-space:nowrap;">
+                        ${formatarData(despesa.created_at)}
+                    </td>
+
+                    <td style="padding:10px 6px;text-align:center;">
+                        ${comprovante}
+                    </td>
                 </tr>
             `;
         });
 
-        // Renderizar e ORDENAR o resumo por categorias (Maior gasto primeiro)
+        // 4. RESUMO POR CATEGORIA, DO MAIOR PARA O MENOR GASTO
         if (blocoCategorias) {
-            blocoCategorias.innerHTML = '';
-            
-            const emojis = {
-                "Descartáveis": "🌭", "Bebidas": "🥤", "Brindes/Bingo": "🎁", 
-                "Decoração": "🎨", "Outros": "📦", "Logística": "🚚", "Infraestrutura": "🎪"
-            };
+            blocoCategorias.innerHTML = "";
 
             Object.entries(resumoCategorias)
                 .sort((a, b) => b[1] - a[1])
                 .forEach(([categoria, valor]) => {
                     const emoji = emojis[categoria] || "📋";
+
                     blocoCategorias.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #ddd; margin-bottom: 8px;">
-                            <span>${emoji} ${categoria}</span>
-                            <span style="font-family: monospace; color: #fff;">R$ ${valor.toFixed(2)}</span>
+                        <div style="display:flex;justify-content:space-between;
+                                    align-items:center;gap:12px;font-size:14px;
+                                    color:#ddd;margin-bottom:8px;">
+                            <span>
+                                ${emoji} ${escaparHTML(categoria)}
+                            </span>
+
+                            <span style="font-family:monospace;color:#fff;white-space:nowrap;">
+                                ${formatarMoeda(valor)}
+                            </span>
                         </div>
                     `;
                 });
         }
-
     } else {
-        tabelaCorpo.innerHTML = '<tr><td colspan="4" style="padding:30px; text-align:center; color:#888; font-style:italic;">Nenhum gasto registrado.</td></tr>';
-        if (blocoCategorias) blocoCategorias.innerHTML = '<p style="color:#666; font-size:13px;">Nenhum gasto para resumir.</p>';
-    }
+        tabelaCorpo.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding:30px;text-align:center;color:#888;">
+                    Nenhuma despesa registrada.
+                </td>
+            </tr>
+        `;
 
-    // --- ATUALIZAR ACUMULADORES NA TELA ---
-    const saldoFinalCaixa = arrecadacaoTotal - custosTotal;
-
-    // Atualiza Bloco Novo: RESUMO GERAL (No topo)
-    if (txtGeralArrecadado) txtGeralArrecadado.innerText = `R$ ${arrecadacaoTotal.toFixed(2)}`;
-    if (txtGeralGasto) txtGeralGasto.innerText = `R$ ${custosTotal.toFixed(2)}`;
-    if (txtGeralSaldo) {
-        txtGeralSaldo.innerText = `R$ ${saldoFinalCaixa.toFixed(2)}`;
-        txtGeralSaldo.style.color = saldoFinalCaixa >= 0 ? "#00BCD4" : "#F44336";
-    }
-
-    // AJUSTE DE SINCRONIZAÇÃO AQUI:
-    // O público geral da ADM soma alunos + ingressos de convidados de parceiros
-    if (txtAlunos) txtAlunos.innerText = `R$ ${(faturamentoPublicoAlunos + faturamentoInscricoesParceiros).toFixed(2)}`;
-    // O patrocínio exibe apenas o PIX puro do parceiro (os R$ 50,00)
-    if (txtParceiros) txtParceiros.innerText = `R$ ${faturamentoPatrocinios.toFixed(2)}`;
-    if (txtArrecadacao) txtArrecadacao.innerText = `R$ ${arrecadacaoTotal.toFixed(2)}`;
-
-    // Atualiza Bloco 2: Total Gasto
-    if (txtTotalGasto) txtTotalGasto.innerText = `R$ ${custosTotal.toFixed(2)}`;
-
-    // Atualiza Bloco 3: Saldo Final Simplificado
-    if (txtSaldoFinal) {
-        txtSaldoFinal.innerText = `R$ ${saldoFinalCaixa.toFixed(2)}`;
-        
-        const lblTextoSaldo = document.getElementById('label-saldo-texto');
-        if (lblTextoSaldo) {
-            if (saldoFinalCaixa < 0) {
-                lblTextoSaldo.innerText = "Déficit após todos os gastos registrados:";
-                txtSaldoFinal.style.color = "#F44336";
-            } else {
-                lblTextoSaldo.innerText = "Saldo após todos os gastos registrados:";
-                txtSaldoFinal.style.color = "#00BCD4";
-            }
+        if (blocoCategorias) {
+            blocoCategorias.innerHTML = `
+                <p style="color:#888;font-size:13px;">
+                    Nenhuma despesa para resumir.
+                </p>
+            `;
         }
     }
+
+    // 5. CALCULAR O SALDO
+    const saldoFinal = arrecadacaoTotal - custosTotal;
+
+    // 6. ATUALIZAR OS VALORES DO RESUMO GERAL
+    if (!erroArrecadacao) {
+        if (txtGeralArrecadado) {
+            txtGeralArrecadado.innerText = formatarMoeda(arrecadacaoTotal);
+        }
+
+        if (txtArrecadacao) {
+            txtArrecadacao.innerText = formatarMoeda(arrecadacaoTotal);
+        }
+    }
+
+    if (txtGeralGasto) {
+        txtGeralGasto.innerText = formatarMoeda(custosTotal);
+    }
+
+    if (txtGeralSaldo) {
+        txtGeralSaldo.innerText = erroArrecadacao
+            ? "Indisponível"
+            : formatarMoeda(saldoFinal);
+
+        txtGeralSaldo.style.color = erroArrecadacao
+            ? "#888"
+            : saldoFinal >= 0 ? "#2ec4b6" : "#F44336";
+    }
+
+    if (txtTotalGasto) {
+        txtTotalGasto.innerText = formatarMoeda(custosTotal);
+    }
+
+    if (txtSaldoFinal) {
+        txtSaldoFinal.innerText = erroArrecadacao
+            ? "Indisponível"
+            : formatarMoeda(saldoFinal);
+
+        txtSaldoFinal.style.color = erroArrecadacao
+            ? "#888"
+            : saldoFinal >= 0 ? "#2ec4b6" : "#F44336";
+    }
+
+    if (lblTextoSaldo) {
+        if (erroArrecadacao) {
+            lblTextoSaldo.innerText =
+                "Não foi possível calcular o saldo:";
+        } else if (saldoFinal < 0) {
+            lblTextoSaldo.innerText =
+                "Déficit após todos os gastos registrados:";
+        } else {
+            lblTextoSaldo.innerText =
+                "Saldo após todos os gastos registrados:";
+        }
+    }
+
+    // Esses dois campos eram específicos do portal antigo do Arraiá.
+    // A Confra não possui, neste código, uma separação entre alunos e parceiros.
+    if (txtAlunos) txtAlunos.innerText = "—";
+    if (txtParceiros) txtParceiros.innerText = "—";
 }

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir senha | Confra ReisFit</title>
+</head>
+<body>
+  <main>
+    <h1>Redefinir senha</h1>
+
+    <p id="mensagem" role="status">
+      Validando link de recuperação...
+    </p>
+
+    <form id="form-senha" hidden>
+      <label for="nova-senha">Nova senha</label>
+      <input
+        id="nova-senha"
+        type="password"
+        minlength="8"
+        autocomplete="new-password"
+        required
+      >
+
+      <label for="confirmar-senha">Confirmar nova senha</label>
+      <input
+        id="confirmar-senha"
+        type="password"
+        minlength="8"
+        autocomplete="new-password"
+        required
+      >
+
+      <button type="submit">Salvar nova senha</button>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/redefinir-senha.js"></script>
+</body>
+</html>
