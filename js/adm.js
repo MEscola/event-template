@@ -992,6 +992,7 @@ async function carregarDespesas() {
         valor,
         categoria,
         url_comprovante,
+        url_nota_fiscal,
         created_at
       `)
       .order("created_at", { ascending: false });
@@ -1019,29 +1020,43 @@ async function carregarDespesas() {
     }
 
     tabela.innerHTML = despesas.map((despesa) => {
-      let comprovante = "Não informado";
+      const criarLink = (url, texto) => {
+        if (!url) return "";
 
-      if (despesa.url_comprovante) {
         try {
-          const url = new URL(despesa.url_comprovante);
+          const endereco = new URL(url);
 
-          if (
-            url.protocol === "https:" ||
-            url.protocol === "http:"
-          ) {
-            comprovante = `
-              <a
-                href="${escaparHTML(url.href)}"
-                target="_blank"
-                rel="noopener noreferrer">
-                Ver comprovante
-              </a>
-            `;
+          if (!["https:", "http:"].includes(endereco.protocol)) {
+            return "";
           }
+
+          return `
+            <a
+              href="${escaparHTML(endereco.href)}"
+              target="_blank"
+              rel="noopener noreferrer">
+              ${texto}
+            </a>
+          `;
         } catch {
-          comprovante = "Link inválido";
+          return "";
         }
-      }
+      };
+
+      const linkComprovante = criarLink(
+        despesa.url_comprovante,
+        "Ver comprovante"
+      );
+
+      const linkNotaFiscal = criarLink(
+        despesa.url_nota_fiscal,
+        "Ver nota fiscal"
+      );
+
+      const links = [
+        linkComprovante,
+        linkNotaFiscal
+      ].filter(Boolean);
 
       const dataFormatada = despesa.created_at
         ? new Date(despesa.created_at).toLocaleDateString("pt-BR")
@@ -1052,9 +1067,11 @@ async function carregarDespesas() {
           <td>${escaparHTML(despesa.descricao)}</td>
           <td>${escaparHTML(despesa.categoria || "—")}</td>
           <td>${formatarMoeda(despesa.valor)}</td>
-          <td>${comprovante}</td>
           <td>
-            ${dataFormatada}
+            ${links.length ? links.join("<br>") : "Não informado"}
+          </td>
+          <td>
+            ${escaparHTML(dataFormatada)}
             <button
               type="button"
               class="admin-btn btn-danger"
@@ -1073,7 +1090,8 @@ async function carregarDespesas() {
       tabela.innerHTML = `
         <tr>
           <td colspan="5">
-            Erro ao carregar despesas. Verifique o acesso ao banco.
+            Erro ao carregar despesas. Verifique a coluna
+            url_nota_fiscal e as permissões do banco.
           </td>
         </tr>
       `;
@@ -1083,27 +1101,24 @@ async function carregarDespesas() {
   }
 }
 
+
 async function salvarDespesa(evento) {
   evento.preventDefault();
   ocultarMensagem();
 
-  const descricao = document
-    .getElementById("despesa-descricao")
-    .value.trim();
+  const campoDescricao = document.getElementById("despesa-descricao");
+  const campoValor = document.getElementById("despesa-valor");
+  const campoCategoria = document.getElementById("despesa-categoria");
+  const campoComprovante = document.getElementById("despesa-comprovante");
+  const campoNotaFiscal = document.getElementById("despesa-nota-fiscal");
+  const formulario = document.getElementById("form-despesa");
+  const botao = document.getElementById("btn-salvar-despesa");
 
-  const valorTexto = document
-    .getElementById("despesa-valor")
-    .value.trim();
-
-  const categoria = document
-    .getElementById("despesa-categoria")
-    .value.trim();
-
-  const comprovante = document
-    .getElementById("despesa-comprovante")
-    .value.trim();
-
-  const valor = Number(valorTexto.replace(",", "."));
+  const descricao = campoDescricao.value.trim();
+  const valor = Number(campoValor.value);
+  const categoria = campoCategoria.value;
+  const comprovante = campoComprovante.value.trim();
+  const arquivo = campoNotaFiscal.files[0] || null;
 
   if (!descricao) {
     mostrarMensagem("Informe a descrição da despesa.", "erro");
@@ -1111,10 +1126,7 @@ async function salvarDespesa(evento) {
   }
 
   if (!Number.isFinite(valor) || valor <= 0) {
-    mostrarMensagem(
-      "Informe um valor válido maior que zero.",
-      "erro"
-    );
+    mostrarMensagem("Informe um valor válido maior que zero.", "erro");
     return;
   }
 
@@ -1123,7 +1135,7 @@ async function salvarDespesa(evento) {
       const url = new URL(comprovante);
 
       if (!["https:", "http:"].includes(url.protocol)) {
-        throw new Error("Protocolo inválido");
+        throw new Error("Link inválido");
       }
     } catch {
       mostrarMensagem(
@@ -1134,39 +1146,123 @@ async function salvarDespesa(evento) {
     }
   }
 
-  const botao = document.getElementById("btn-salvar-despesa");
+  if (arquivo) {
+    const tiposPermitidos = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
+
+    const extensoesPermitidas = /\.(pdf|jpe?g|png|webp)$/i;
+
+    if (
+      !tiposPermitidos.includes(arquivo.type) ||
+      !extensoesPermitidas.test(arquivo.name)
+    ) {
+      mostrarMensagem(
+        "A nota fiscal deve ser um arquivo PDF, JPG, PNG ou WEBP.",
+        "erro"
+      );
+      return;
+    }
+
+    if (arquivo.size > 10 * 1024 * 1024) {
+      mostrarMensagem(
+        "A nota fiscal deve ter no máximo 10 MB.",
+        "erro"
+      );
+      return;
+    }
+  }
 
   if (botao) botao.disabled = true;
 
+  let caminhoArquivoEnviado = null;
+
   try {
     const autorizado = await validarAdministrador();
+
     if (!autorizado) return;
 
-    const { error } = await _supabase
+    let urlNotaFiscal = null;
+
+    if (arquivo) {
+      mostrarMensagem("Enviando nota fiscal...");
+
+      const nomeSeguro = arquivo.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      caminhoArquivoEnviado =
+        `${Date.now()}-${nomeSeguro}`;
+
+      const { error: erroUpload } = await _supabase.storage
+        .from("notas-fiscais")
+        .upload(caminhoArquivoEnviado, arquivo, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: arquivo.type
+        });
+
+      if (erroUpload) throw erroUpload;
+
+      const { data: arquivoPublico } = _supabase.storage
+        .from("notas-fiscais")
+        .getPublicUrl(caminhoArquivoEnviado);
+
+      urlNotaFiscal = arquivoPublico.publicUrl;
+    }
+
+    const { error: erroCadastro } = await _supabase
       .from("despesas")
       .insert({
         descricao,
         valor,
         categoria: categoria || null,
-        url_comprovante: comprovante || null
+        url_comprovante: comprovante || null,
+        url_nota_fiscal: urlNotaFiscal
       });
 
-    if (error) throw error;
+    if (erroCadastro) throw erroCadastro;
 
-    document.getElementById("form-despesa").reset();
+    formulario.reset();
 
-    mostrarMensagem("Despesa cadastrada com sucesso.");
+    mostrarMensagem(
+      arquivo
+        ? "Despesa cadastrada e nota fiscal enviada com sucesso."
+        : "Despesa cadastrada com sucesso."
+    );
+
     await carregarPainelADM(false);
   } catch (erro) {
-    console.error("Erro ao salvar despesa:", erro);
+    console.error("Erro ao salvar despesa ou enviar nota fiscal:", erro);
+
+    if (caminhoArquivoEnviado) {
+      const { error: erroRemocao } = await _supabase.storage
+        .from("notas-fiscais")
+        .remove([caminhoArquivoEnviado]);
+
+      if (erroRemocao) {
+        console.error(
+          "Não foi possível remover o arquivo enviado:",
+          erroRemocao
+        );
+      }
+    }
+
     mostrarMensagem(
-      "Não foi possível cadastrar a despesa.",
+      `Não foi possível salvar a despesa ou enviar a nota fiscal: ${
+        erro.message || "verifique as configurações do Supabase."
+      }`,
       "erro"
     );
   } finally {
     if (botao) botao.disabled = false;
   }
 }
+
 
 async function excluirDespesa(id) {
   if (
