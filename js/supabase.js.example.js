@@ -10,7 +10,7 @@
 const SUPABASE_URL = "SUA_SUPABASE_URL";
 const SUPABASE_ANON_KEY = "SUA_CHAVE_PUBLICA_ANON";
 
-const _supabase = supabase.createClient(
+window._supabase = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );

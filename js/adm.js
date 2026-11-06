@@ -76,7 +76,7 @@ function atualizarIndicadoresFinanceiros() {
   }
 }
 
-function alternarTelaLogada(logado, email = "") {
+function alternarTelaLogada(logado) {
   const telaLogin = document.getElementById("tela-login");
   const painel = document.getElementById("painel-admin");
   const identificacao = document.getElementById("admin-identificado");
@@ -90,8 +90,10 @@ function alternarTelaLogada(logado, email = "") {
   }
 
   if (identificacao) {
+    const nome = window.perfilAdministrador?.nome || "";
+
     identificacao.textContent = logado
-      ? `Administrador: ${email}`
+      ? `Administrador: ${nome}`
       : "";
   }
 }
@@ -218,133 +220,7 @@ function configurarBuscaInscricoes() {
   });
 }
 
-// =====================================================
-// AUTENTICAÇÃO E AUTORIZAÇÃO
-// =====================================================
 
-async function validarAdministrador() {
-  try {
-    const {
-      data: { user },
-      error
-    } = await _supabase.auth.getUser();
-
-    if (error || !user) {
-      alternarTelaLogada(false);
-      return false;
-    }
-
-    const { data, error: erroAdmin } = await _supabase.rpc("is_admin");
-
-    if (erroAdmin || data !== true) {
-      await _supabase.auth.signOut();
-      alternarTelaLogada(false);
-
-      mostrarMensagem(
-        "Seu usuário não tem permissão de administrador.",
-        "erro"
-      );
-
-      return false;
-    }
-
-    alternarTelaLogada(true, user.email || "");
-    return true;
-  } catch (erro) {
-    console.error("Erro ao validar administrador:", erro);
-    alternarTelaLogada(false);
-
-    mostrarMensagem(
-      "Não foi possível validar o acesso. Tente novamente.",
-      "erro"
-    );
-
-    return false;
-  }
-}
-
-async function entrarNoPainel(evento) {
-  evento.preventDefault();
-  ocultarMensagem();
-
-  const email = document.getElementById("login-email")?.value.trim();
-  const senha = document.getElementById("login-senha")?.value;
-  const botao = document.getElementById("btn-login");
-
-  if (!email || !senha) {
-    mostrarMensagem("Informe seu e-mail e sua senha.", "erro");
-    return;
-  }
-
-  if (botao) botao.disabled = true;
-
-  try {
-    const { error } = await _supabase.auth.signInWithPassword({
-      email,
-      password: senha
-    });
-
-    if (error) {
-      mostrarMensagem(
-        "Não foi possível entrar. Confira o e-mail e a senha.",
-        "erro"
-      );
-      return;
-    }
-
-    const autorizado = await validarAdministrador();
-
-    if (!autorizado) return;
-
-    mostrarMensagem("Login realizado com sucesso.");
-    await carregarPainelADM(false);
-  } catch (erro) {
-    console.error("Erro no login:", erro);
-
-    mostrarMensagem(
-      "Ocorreu um erro ao tentar entrar no painel.",
-      "erro"
-    );
-  } finally {
-    if (botao) botao.disabled = false;
-  }
-}
-
-async function sairDoPainel() {
-  try {
-    const { error } = await _supabase.auth.signOut();
-    if (error) throw error;
-
-    arrecadacaoTotal = 0;
-    despesasTotal = 0;
-    inscricoesCache.clear();
-
-    const campoBusca = document.getElementById("buscar-inscricao");
-    const painelBusca = document.getElementById("painel-busca-inscricoes");
-    const botaoBusca = document.getElementById("btn-toggle-busca");
-
-    if (campoBusca) campoBusca.value = "";
-
-    if (painelBusca) painelBusca.hidden = true;
-
-    if (botaoBusca) {
-      botaoBusca.setAttribute("aria-expanded", "false");
-      botaoBusca.setAttribute("aria-label", "Localizar cadastro");
-      botaoBusca.title = "Localizar cadastro";
-    }
-
-    atualizarIndicadoresFinanceiros();
-
-    const indicadorPessoas = document.getElementById("indicador-pessoas");
-    if (indicadorPessoas) indicadorPessoas.textContent = "0";
-
-    alternarTelaLogada(false);
-    mostrarMensagem("Você saiu do painel.");
-  } catch (erro) {
-    console.error("Erro ao sair:", erro);
-    mostrarMensagem("Não foi possível encerrar a sessão.", "erro");
-  }
-}
 
 // =====================================================
 // ABAS
@@ -1296,25 +1172,126 @@ async function excluirDespesa(id) {
 }
 
 // =====================================================
+// CADASTRAR ADMINISTRADOR
+// =====================================================
+
+async function salvarNovoAdministrador(evento) {
+  evento.preventDefault();
+  ocultarMensagem();
+
+  const formulario = document.getElementById("form-administrador");
+  const botao = document.getElementById("btn-criar-administrador");
+
+  const nome = document.getElementById("admin-nome").value.trim();
+  const alias = document.getElementById("admin-alias").value.trim().toLowerCase();
+  const senha = document.getElementById("admin-senha").value;
+
+  if (!nome || !alias || !senha) {
+    mostrarMensagem("Preencha todos os campos.", "erro");
+    return;
+  }
+
+  if (!/^[a-z0-9._-]{3,30}$/.test(alias)) {
+    mostrarMensagem("Alias inválido. Verifique os caracteres permitidos.", "erro");
+    return;
+  }
+
+  if (senha.length < 8) {
+    mostrarMensagem("A senha deve ter pelo menos 8 caracteres.", "erro");
+    return;
+  }
+
+  botao.disabled = true;
+
+  try {
+    const { data, error } = await _supabase.functions.invoke(
+      "gerenciar-administradores",
+      {
+        body: { nome, alias, senha }
+      }
+    );
+
+    if (error) {
+      let mensagem = error.message || "Não foi possível cadastrar o administrador.";
+
+      try {
+        const resposta = await error.context.json();
+        mensagem = resposta.erro || mensagem;
+      } catch {
+        // Mantém a mensagem original do erro.
+      }
+
+      throw new Error(mensagem);
+    }
+
+    formulario.reset();
+
+    mostrarMensagem(
+      data?.mensagem || "Administrador cadastrado com sucesso."
+    );
+
+  } catch (erro) {
+    console.error("Erro ao cadastrar administrador:", erro);
+    mostrarMensagem(erro.message, "erro");
+
+  } finally {
+    botao.disabled = false;
+  }
+}
+
+// =====================================================
+// ACESSO À ABA DE ADMINISTRADORES
+// =====================================================
+
+async function configurarAcessoAdministradores() {
+  try {
+    const { data, error } = await _supabase.rpc("is_principal");
+
+    if (error || data !== true) {
+      return;
+    }
+
+    const aba = document.getElementById("aba-administradores");
+    const secao = document.getElementById("secao-administradores");
+
+    if (aba) {
+      aba.style.display = "";
+    }
+
+    if (secao) {
+      secao.style.display = "";
+    }
+
+  } catch (erro) {
+    console.error("Erro ao verificar acesso aos administradores:", erro);
+  }
+}
+
+// =====================================================
 // EVENTOS
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Inicialização das funcionalidades administrativas.
   configurarAbas();
   configurarBuscaInscricoes();
 
-  document
-    .getElementById("form-login")
-    ?.addEventListener("submit", entrarNoPainel);
+  // Eventos de autenticação ficam no auth.js.
+  configurarEventosAuth();
 
-  document
-    .getElementById("btn-sair")
-    ?.addEventListener("click", sairDoPainel);
+ 
 
+  // Cadastro de despesas.
   document
     .getElementById("form-despesa")
     ?.addEventListener("submit", salvarDespesa);
 
+  // Cadastro de administrador.
+document
+  .getElementById("form-administrador")
+  ?.addEventListener("submit", salvarNovoAdministrador);
+
+  // Atualizar inscrições.
   document
     .getElementById("btn-atualizar-inscricoes")
     ?.addEventListener("click", async () => {
@@ -1332,22 +1309,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
+  // Editar inscrição.
   document
     .getElementById("form-edicao")
     ?.addEventListener("submit", salvarEdicaoInscricao);
 
+  // Adicionar acompanhante.
   document
     .getElementById("btn-adicionar-acompanhante")
     ?.addEventListener("click", () => {
       adicionarCampoAcompanhante();
     });
 
+  // Cancelar edição.
   document
     .getElementById("btn-cancelar-edicao")
     ?.addEventListener("click", () => {
       document.getElementById("modal-edicao")?.close();
     });
 
+  // Remover acompanhante.
   document
     .getElementById("lista-acompanhantes-edicao")
     ?.addEventListener("click", (evento) => {
@@ -1360,13 +1341,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       botao.closest(".acompanhante-item")?.remove();
     });
 
+  // Ações das tabelas.
   document.addEventListener("click", async (evento) => {
     const botao = evento.target.closest("button[data-acao]");
     if (!botao) return;
 
     const { acao, id, status } = botao.dataset;
 
-    // Evita cliques repetidos durante uma operação.
     if (botao.disabled) return;
 
     botao.disabled = true;
@@ -1384,14 +1365,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         await excluirDespesa(id);
       }
     } finally {
-      // A tabela pode ter sido redesenhada durante a operação.
       botao.disabled = false;
     }
   });
 
+  // Verifica se já existe uma sessão autenticada.
   const autorizado = await validarAdministrador();
 
-  if (autorizado) {
-    await carregarPainelADM(false);
-  }
+if (autorizado) {
+  await configurarAcessoAdministradores();
+  await carregarPainelADM(false);
+}
 });

@@ -215,6 +215,21 @@
     background: var(--line-strong);
 }
 
+.login-senha-wrap { display: flex; align-items: stretch; gap: 8px; }
+    .login-senha-wrap input { flex: 1; min-width: 0; }
+
+    .btn-mostrar-senha { flex: 0 0 auto; padding: 0 12px; cursor: pointer;  border-radius: 8px; min-height: 40px;
+    margin: 2px;
+    padding: 8px 14px;
+    color: var(--text-secondary);
+    border: 0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer; }
+
+    .btn-esqueci-senha { display: block; margin: 12px auto 0; padding: 6px 4px; border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; }
+    .btn-mostrar-senha:focus-visible, .btn-esqueci-senha:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 /* ---------- Status ---------- */
 
 .status-pill {
