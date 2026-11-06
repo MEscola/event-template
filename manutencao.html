@@ -3,124 +3,77 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arraiá ReisFit — Quem vai? 👀</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Configuração para o link em destaque com imagem no WhatsApp -->
-<meta property="og:site_name" content="Reis Fit">
-<meta property="og:title" content="REIS FIT 🤠">
-<meta property="og:image" content="https://mescola.github.io/arraia-reisfit/assets/images/banner.png?v=novo">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://mescola.github.io/arraia-reisfit/?v=novo">
-<meta property="og:type" content="website">
+    <title>Confra ReisFit 2026 | Portal da Transparência</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        /* Garante que a seção apareça perfeitamente na tela */
-        #tela-lista {
-            display: block;
-        }
-        /* Ajuste de distanciamento das bordas da tela para mobile */
-        .container {
-            padding: 15px;
-        }
-    </style>
+    <!-- Prévia para WhatsApp e redes sociais -->
+    <meta property="og:site_name" content="ReisFit">
+    <meta property="og:title" content="🌴 CONFRA REISFIT 2026 ☀️🍹">
+    <meta property="og:description"
+        content="A Confra foi incrível! Estamos preparando a prestação de contas. Nosso Portal da Transparência chegará em breve!">
+    <meta property="og:type" content="website">
+
+    <!-- Imagem de prévia -->
+    <meta property="og:image"
+        content="https://mescola.github.io/confra-reisfit/assets/images/teste-banner.jpeg?v=2026">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://mescola.github.io/confra-reisfit/?v=2026">
+
+    <meta name="theme-color" content="#FFF8EF">
+
+    <!-- Fontes e estilos -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/manutencao.css">
 </head>
 
 <body>
 
     <header>
-        <img id="banner" src="assets/images/banner.png" alt="Banner Arraiá">
+        <img src="assets/images/teste-banner.jpeg" alt="Confra ReisFit 2026">
     </header>
 
-<div class="card" style="
-    max-width: 520px;
-    margin: 20px auto;
-    padding: 30px 25px;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,193,7,.35);
-    text-align: center;
-    box-shadow: 0 8px 30px rgba(0,0,0,.25);
-">
+    <main class="manutencao-container">
 
+        <section class="manutencao-card">
 
-    <h1 style="color:#FFC107; margin-bottom:15px;">
-        Nosso Arraiá foi um sucesso!
-    </h1>
+            <h1> A Confra foi incrível!</h1>
 
-    <p style="color:#ddd; line-height:1.7; font-size:16px; margin-bottom:25px;">
-        Muito obrigado a todos que participaram, colaboraram e fizeram parte desse momento especial.
-        Foi uma noite incrível, repleta de alegria, amizade e diversão.
-    </p>
+            <p class="manutencao-subtitulo">
+                Sem AMRAP, sem cronômetro e sem burpees!
+                Dessa vez, o desafio era aproveitar cada segundo
+                e colecionar bons momentos!
+            </p>
 
-    <div style="
-        background: rgba(255,193,7,.08);
-        border-left: 4px solid #FFC107;
-        border-radius: 10px;
-        padding: 18px;
-        margin: 25px 0;
-        text-align:left;
-    ">
+            <div class="manutencao-aviso">
 
-        <p style="color:#ddd; line-height:1.6; margin-bottom:15px;">
-            Estamos conferindo e organizando todas as informações do evento para publicar a prestação de contas completa.
-        </p>
+                <p>
+                    Agora que a festa passou, chegou a hora de colocar
+                    tudo em ordem! Estamos preparando a prestação de
+                    contas para compartilhar todos os detalhes com vocês.
+                </p>
 
-        <div style="color:#fff; line-height:1.9; font-size:15px;">
-            ✅ Recursos arrecadados<br>
-            ✅ Despesas <br>
-            ✅ Comprovantes das compras<br>
-            ✅ Saldo final do evento<br>
-            ✅ Agradecimentos aos parceiros
-        </div>
+                <div class="manutencao-lista">
+                    <div>✅ Recursos arrecadados</div>
+                    <div>✅ Despesas</div>
+                    <div>✅ Comprovantes das compras</div>
+                    <div>✅ Saldo final do evento</div>
+                </div>
 
-    </div>
+            </div>
 
-    
+            <footer class="manutencao-rodape">
+                <p>
+                    Nosso Portal da Transparência chegará em breve!
+                </p>
+            </footer>
 
-    <p style="font-size:18px; color:#FFC107; margin-top:10px;">
-        Estará disponível em breve.
-    </p>
+        </section>
 
-</div>
-<script>
-    let contadorCliques = 0;
-
-    document.getElementById("banner").addEventListener("click", () => {
-        contadorCliques++;
-
-        if (contadorCliques >= 5) {
-            contadorCliques = 0;
-            verificarAcessoAdmRedirecionamento();
-        }
-
-        // Reseta se demorar muito entre os cliques
-        setTimeout(() => {
-            contadorCliques = 0;
-        }, 3000);
-    });
-
-    function verificarAcessoAdmRedirecionamento() {
-        const senhaDigitada = prompt("Digite a senha do Financeiro ADM:");
-
-        if (!senhaDigitada) return;
-
-        const senhaTratada = senhaDigitada.toLowerCase().trim();
-        const senhaMascarada = "6202tifsier";
-        const senhaCorreta = senhaMascarada.split('').reverse().join('');
-
-        if (senhaTratada === senhaCorreta) {
-            sessionStorage.setItem('reisfit_adm_auth', 'autorizado');
-            window.location.href = "adm.html?v=6";
-        } else {
-            alert("Senha incorreta!");
-        }
-    }
-</script>
+    </main>
 
 </body>
+</html>
