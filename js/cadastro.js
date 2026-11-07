@@ -591,6 +591,145 @@ function coletarAcompanhantes() {
     return acompanhantes;
 }
 
+
+ // ---------- Contribuições para o churrasco ----------
+
+function adicionarContribuicao(focar = true) {
+    const container = document.getElementById("campos-contribuicoes");
+
+    if (!container) return;
+
+    const item = document.createElement("div");
+    item.className = "contribuicao-item";
+
+    const grupoItem = document.createElement("div");
+    grupoItem.className = "form-group";
+
+    const labelItem = document.createElement("label");
+    labelItem.textContent = "O que pretende levar?";
+
+    const selectItem = document.createElement("select");
+    selectItem.className = "contribuicao-tipo";
+    selectItem.innerHTML = `
+        <option value="">Selecione um item</option>
+        <option value="Carne">Carne</option>
+        <option value="Frango">Frango</option>
+        <option value="Linguiça">Linguiça</option>
+        <option value="Outros">Outros</option>
+    `;
+
+    labelItem.appendChild(selectItem);
+    grupoItem.appendChild(labelItem);
+
+    const grupoQuantidade = document.createElement("div");
+    grupoQuantidade.className = "form-group campo-oculto";
+
+    const labelQuantidade = document.createElement("label");
+    labelQuantidade.textContent = "Quantidade (opcional)";
+
+    const inputQuantidade = document.createElement("input");
+    inputQuantidade.type = "text";
+    inputQuantidade.className = "contribuicao-quantidade";
+    inputQuantidade.placeholder = "Ex.: 2 ou 2,5";
+    inputQuantidade.inputMode = "decimal";
+    inputQuantidade.maxLength = 12;
+
+    labelQuantidade.appendChild(inputQuantidade);
+    grupoQuantidade.appendChild(labelQuantidade);
+
+    const grupoUnidade = document.createElement("div");
+    grupoUnidade.className = "form-group campo-oculto";
+
+    const labelUnidade = document.createElement("label");
+    labelUnidade.textContent = "Unidade (opcional)";
+
+    const inputUnidade = document.createElement("input");
+    inputUnidade.type = "text";
+    inputUnidade.className = "contribuicao-unidade";
+    inputUnidade.placeholder = "Ex.: kg, pacote";
+    inputUnidade.maxLength = 20;
+
+    labelUnidade.appendChild(inputUnidade);
+    grupoUnidade.appendChild(labelUnidade);
+
+    const botaoRemover = document.createElement("button");
+    botaoRemover.type = "button";
+    botaoRemover.className = "remover-contribuicao";
+    botaoRemover.textContent = "Remover item";
+    botaoRemover.addEventListener("click", () => item.remove());
+
+    item.append(
+        grupoItem,
+        grupoQuantidade,
+        grupoUnidade,
+        botaoRemover
+    );
+
+    container.appendChild(item);
+
+    if (focar) selectItem.focus();
+}
+
+function coletarContribuicoes() {
+    const container = document.getElementById("campos-contribuicoes");
+
+    if (!container) return [];
+
+    const itens = container.querySelectorAll(".contribuicao-item");
+    const contribuicoes = [];
+
+    for (const item of itens) {
+        const tipo = item.querySelector(".contribuicao-tipo")?.value || "";
+        const quantidadeTexto =
+            item.querySelector(".contribuicao-quantidade")?.value.trim() || "";
+        const unidade =
+            item.querySelector(".contribuicao-unidade")?.value.trim() || "";
+
+        if (!tipo) {
+            throw new Error("Selecione o item de cada contribuição adicionada.");
+        }
+
+        if (unidade.length > 20) {
+            throw new Error("A unidade deve ter no máximo 20 caracteres.");
+        }
+
+        if (quantidadeTexto && !/^[0-9]+([.,][0-9]{1,2})?$/.test(quantidadeTexto)) {
+            throw new Error(
+                "Informe uma quantidade válida, com até duas casas decimais."
+            );
+        }
+
+        let quantidade = null;
+
+        if (quantidadeTexto) {
+            quantidade = Number(quantidadeTexto.replace(",", "."));
+
+            if (
+                !Number.isFinite(quantidade) ||
+                quantidade <= 0 ||
+                quantidade > 999999.99
+            ) {
+                throw new Error("A quantidade deve ser maior que zero e válida.");
+            }
+        }
+
+        if (unidade && quantidade === null) {
+            throw new Error(
+                "Informe a quantidade quando preencher a unidade."
+            );
+        }
+
+        contribuicoes.push({
+            item: tipo,
+            quantidade,
+            unidade: unidade || null
+        });
+    }
+
+    return contribuicoes;
+}
+
+
 // ---------- Confirmação ----------
 
 function mostrarConfirmacao({
@@ -695,6 +834,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const botaoCopiarPix = document.getElementById("btn-copiar-pix");
 
+    const botaoAdicionarContribuicao = document.getElementById(
+    "btn-adicionar-contribuicao"
+);
+
+botaoAdicionarContribuicao?.addEventListener("click", () => {
+    adicionarContribuicao();
+});
+
     if (!formulario || !campoTitular || !botaoEnviar) {
         console.error(
             "Confra: confira os IDs form-inscricao, nome/nome_titular e btn-enviar no app.html."
@@ -784,6 +931,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
             const acompanhantes = coletarAcompanhantes();
 
+            const contribuicoes = coletarContribuicoes();
+
             if (
                 tipoParticipacao !== "acompanhantes" &&
                 acompanhantes.length > 0
@@ -808,10 +957,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
             // 5. Preparar uma representação estável dos dados.
             // A mesma inscrição precisa gerar o mesmo payload.
-            const payload = JSON.stringify({
-                nomeTitular,
-                acompanhantes
-            });
+            const dadosPayload = {
+    nomeTitular,
+    acompanhantes
+};
+
+// Só acrescenta a propriedade quando houver contribuições.
+// Isso mantém a compatibilidade com tentativas antigas sem contribuições.
+if (contribuicoes.length > 0) {
+    dadosPayload.contribuicoes = contribuicoes;
+}
+
+const payload = JSON.stringify(dadosPayload);
 
             // Reutiliza a chave se esta mesma tentativa já existir.
             chaveTentativa = obterTentativaPendente(payload);
@@ -823,13 +980,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
             try {
                 resultado = await _supabase.rpc(
-                    "criar_inscricao_v2",
-                    {
-                        p_nome_titular: nomeTitular,
-                        p_acompanhantes: acompanhantes,
-                        p_chave_idempotencia: chaveTentativa
-                    }
-                );
+    "criar_inscricao_v3",
+    {
+        p_nome_titular: nomeTitular,
+        p_acompanhantes: acompanhantes,
+        p_chave_idempotencia: chaveTentativa,
+        p_contribuicoes: contribuicoes
+    }
+);
             } catch (erroRequisicao) {
                 // Não sabemos se o banco gravou a inscrição.
                 resultadoIncerto = true;

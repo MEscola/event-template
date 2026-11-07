@@ -102,7 +102,21 @@ async function carregarListaPublica() {
                 `${quantidade === 1 ? "pessoa" : "pessoas"} no grupo`;
 
             card.append(cabecalho, pessoas);
-            container.appendChild(card);
+
+// Contribuições para o churrasco
+if (
+    Array.isArray(inscricao.contribuicoes) &&
+    inscricao.contribuicoes.length > 0
+) {
+    const contribuicoes = document.createElement("p");
+    contribuicoes.className = "inscricao-contribuicoes";
+    contribuicoes.textContent =
+        `Vai levar: ${inscricao.contribuicoes.join(" e ")}`;
+
+    card.appendChild(contribuicoes);
+}
+
+container.appendChild(card);
         });
 
     } catch (error) {

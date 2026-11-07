@@ -920,3 +920,64 @@ body:has(#tela-confirmacao:not([hidden])) header {
         animation-duration: 0.01ms !important;
     }
 }
+
+
+/* =========================================
+   CONTRIBUIÇÕES PARA O CHURRASCO
+========================================= */
+
+.contribuicao-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-card);
+    background: var(--input-bg);
+}
+
+.contribuicao-item .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.contribuicao-item select,
+.contribuicao-item input {
+    width: 100%;
+}
+
+.remover-contribuicao {
+    grid-column: 1 / -1;
+    justify-self: end;
+    border: none;
+    background: transparent;
+    color: #c0392b;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 0;
+}
+
+#btn-adicionar-contribuicao {
+    margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+    .contribuicao-item {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .contribuicao-item .form-group:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .remover-contribuicao {
+        grid-column: 1 / -1;
+    }
+}
+
+.campo-oculto {
+    display: none !important;
+}

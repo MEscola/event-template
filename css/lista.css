@@ -177,3 +177,10 @@
 .btn-whatsapp:active {
     transform: scale(0.98);
 }
+
+.inscricao-contribuicoes {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
