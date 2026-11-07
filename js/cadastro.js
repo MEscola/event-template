@@ -9,7 +9,7 @@ const PRECOS_PREVIA = {
     acompanhante11a15: 15
 };
 
-const CHAVE_PIX = "DIGITAR A CHAVE PIX AQUI";
+const CHAVE_PIX = "8f0e4da5-ac90-4161-89c4-30d07dc16cbf";
 const LIMITE_ACOMPANHANTES = 30;
 
 // ---------- Utilitários ----------
